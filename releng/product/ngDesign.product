@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?pde version="3.5"?>
+
+<product name="ngDesign" uid="ngDesign" id="com.synflow.ngDesign.ide.product" application="org.eclipse.ui.ide.workbench" version="0.92.0" useFeatures="true" includeLaunchers="true">
+
+   <aboutInfo>
+      <image path="icons/about.png"/>
+      <text>
+         %productBlurb
+      </text>
+   </aboutInfo>
+
+   <configIni use="default">
+   </configIni>
+
+   <launcherArgs>
+      <programArgs>-product com.synflow.ngDesign.ide.product --launcher.defaultAction openFile
+      </programArgs>
+      <programArgsMac>-vm ../Frameworks/jre/lib/jli/libjli.dylib
+      </programArgsMac>
+      <vmArgs>-Dosgi.requiredJavaVersion=1.8 -Xms40m -Xmx512m
+      </vmArgs>
+      <vmArgsMac>-XstartOnFirstThread -Dorg.eclipse.swt.internal.carbon.smallFonts
+      </vmArgsMac>
+   </launcherArgs>
+
+   <windowImages i16="icons/ngDesign16.png" i32="icons/ngDesign32.png" i48="icons/ngDesign48.png" i64="icons/ngDesign64.png" i128="icons/ngDesign128.png" i256="icons/ngDesign256.png"/>
+
+   <splash
+      location="com.synflow.ngDesign.ide"
+      startupProgressRect="2,290,448,10"
+      startupMessageRect="7,270,320,20"
+      startupForegroundColor="FFFFFF" />
+   <launcher name="ngDesign">
+      <linux icon="icons/ngDesign48.xpm"/>
+      <solaris/>
+      <win useIco="true">
+         <ico path="/releng/product/icons/ngDesign.ico"/>
+         <bmp/>
+      </win>
+   </launcher>
+
+   <vm>
+      <linux include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8</linux>
+      <macos include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8</macos>
+      <windows include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8</windows>
+   </vm>
+
+   <license>
+        <url>https://www.synflow.com/license/terms</url>
+        <text>
+   This is a legal agreement between you, the end user, and Synflow SAS.
+
+By proceeding with the installation or use of ngDesign (or any part of it, including the libraries), you
+  (1) agree that you have the power and authority to accept this agreement on behalf of your company or institution;
+  (2) acknowledge you have read the terms of this agreement, understood it, and agreed to be bound by the terms and conditions of this Agreement;
+  (3) acknowledge the software is the intellectual property of Synflow SAS, and you will not try to copy or analyze any part the software code.
+
+If you do not agree to the terms and conditions of this Agreement, do not use, download, or install the Software, and if you have already obtained the Software from an authorized source, promptly remove it from your system and return the package or installer and all accompanying items to the place you obtained them.
+         </text>
+   </license>
+
+   <plugins>
+   </plugins>
+
+   <features>
+      <feature id="com.synflow.ngDesign.feature"/>
+      <feature id="com.synflow.ngDesign.plugins" installMode="root"/>
+   </features>
+
+   <configurations>
+      <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="4" />
+      <plugin id="org.eclipse.equinox.common" autoStart="true" startLevel="2" />
+      <plugin id="org.apache.felix.scr" autoStart="true" startLevel="2" />
+      <plugin id="org.eclipse.equinox.event" autoStart="true" startLevel="2" />
+      <plugin id="org.eclipse.equinox.simpleconfigurator" autoStart="true" startLevel="1" />
+      <plugin id="org.eclipse.update.configurator" autoStart="false" startLevel="0" />
+      <property name="eclipse.buildId" value="@qualifier@" />
+      <property name="osgi.instance.area.default" value="@user.home/workspace" />
+   </configurations>
+
+   <preferencesInfo>
+      <targetfile overwrite="false"/>
+   </preferencesInfo>
+
+   <cssInfo>
+   </cssInfo>
+
+</product>

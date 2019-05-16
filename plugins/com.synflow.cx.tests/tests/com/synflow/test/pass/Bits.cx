@@ -1,0 +1,252 @@
+/*******************************************************************************
+ * Copyright (c) 2012-2014 Synflow SAS.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Matthieu Wipliez
+ *    Nicolas Siret
+ *******************************************************************************/
+package com.synflow.test.pass.bit;
+
+task BitSelect1 {
+	properties {
+		test: {inp: [ 1, 1, 32768, 32768, 256, 256 ], outp: [ false, false, true, false, false, true ] }
+	}
+
+	sync {
+		in u16 inp; out bool outp;
+	}
+
+	ushort w;
+
+	void loop() {
+		ushort v = inp.read();
+		outp.write(v[15]);
+	
+		w = inp.read();
+		outp.write(w[8]);
+	}
+}
+
+task BitSelect2 {
+	properties {
+		test: {inp: [ 1, 0, 2 ], outp: [ 128, 128, 130 ] }
+	}
+
+	sync {
+		in u8 inp; out u8 outp;
+	}
+
+	void loop() {
+		ushort v = inp.read();
+		v[0] = false;
+		v[7] = true;
+		outp.write(v & 0xFF);
+	}
+}
+
+task BitSelect3 {
+	properties {
+		test: {inp: [ 1, 0, 2 ], outp: [ 128, 128, 130 ], o2: [ false, true, false ] }
+	}
+
+	sync {
+		in u8 inp; out ushort outp, bool o2;
+	}
+
+	const unsigned int x = 5000;
+
+	void loop() {
+		ushort v = inp.read();
+		bool az = false, aze = true;
+		bool azef = az ^ (az | (aze & az));
+		
+		o2.write(!(v[0] | v[1]));
+	
+		v[0] = x == 15320;
+		v[7] = 1;
+		outp.write(v);
+	}
+}
+
+task BitSelect4 {
+	// a = 97, z = 122, e = 101
+	properties {
+		test: {inp: [ 'a', 'z', 'e' ], outp: [ null, null, 0x753e3a7a ] }
+	}
+
+	sync {
+		in u8 inp; out u32 outp;
+	}
+	
+	const u32 compute_crc(u32 crc, u8 data) {
+		const u32 c = crc;
+		u8 d;
+		d[0] = data[7]; d[1] = data[6]; d[2] = data[5]; d[3] = data[4];
+		d[4] = data[3]; d[5] = data[2]; d[6] = data[1]; d[7] = data[0];
+		u32 newCrc;
+	
+		newCrc[0] = d[6] ^ d[0] ^ c[24] ^ c[30];
+		newCrc[1] = d[7] ^ d[6] ^ d[1] ^ d[0] ^ c[24] ^ c[25] ^ c[30] ^ c[31];
+		newCrc[2] = d[7] ^ d[6] ^ d[2] ^ d[1] ^ d[0] ^ c[24] ^ c[25] ^ c[26] ^ c[30] ^ c[31];
+		newCrc[3] = d[7] ^ d[3] ^ d[2] ^ d[1] ^ c[25] ^ c[26] ^ c[27] ^ c[31];
+		newCrc[4] = d[6] ^ d[4] ^ d[3] ^ d[2] ^ d[0] ^ c[24] ^ c[26] ^ c[27] ^ c[28] ^ c[30];
+		newCrc[5] = d[7] ^ d[6] ^ d[5] ^ d[4] ^ d[3] ^ d[1] ^ d[0] ^ c[24] ^ c[25] ^ c[27] ^ c[28] ^ c[29] ^ c[30] ^ c[31];
+		newCrc[6] = d[7] ^ d[6] ^ d[5] ^ d[4] ^ d[2] ^ d[1] ^ c[25] ^ c[26] ^ c[28] ^ c[29] ^ c[30] ^ c[31];
+		newCrc[7] = d[7] ^ d[5] ^ d[3] ^ d[2] ^ d[0] ^ c[24] ^ c[26] ^ c[27] ^ c[29] ^ c[31];
+		newCrc[8] = d[4] ^ d[3] ^ d[1] ^ d[0] ^ c[0] ^ c[24] ^ c[25] ^ c[27] ^ c[28];
+		newCrc[9] = d[5] ^ d[4] ^ d[2] ^ d[1] ^ c[1] ^ c[25] ^ c[26] ^ c[28] ^ c[29];
+		newCrc[10] = d[5] ^ d[3] ^ d[2] ^ d[0] ^ c[2] ^ c[24] ^ c[26] ^ c[27] ^ c[29];
+		newCrc[11] = d[4] ^ d[3] ^ d[1] ^ d[0] ^ c[3] ^ c[24] ^ c[25] ^ c[27] ^ c[28];
+		newCrc[12] = d[6] ^ d[5] ^ d[4] ^ d[2] ^ d[1] ^ d[0] ^ c[4] ^ c[24] ^ c[25] ^ c[26] ^ c[28] ^ c[29] ^ c[30];
+		newCrc[13] = d[7] ^ d[6] ^ d[5] ^ d[3] ^ d[2] ^ d[1] ^ c[5] ^ c[25] ^ c[26] ^ c[27] ^ c[29] ^ c[30] ^ c[31];
+		newCrc[14] = d[7] ^ d[6] ^ d[4] ^ d[3] ^ d[2] ^ c[6] ^ c[26] ^ c[27] ^ c[28] ^ c[30] ^ c[31];
+		newCrc[15] = d[7] ^ d[5] ^ d[4] ^ d[3] ^ c[7] ^ c[27] ^ c[28] ^ c[29] ^ c[31];
+		newCrc[16] = d[5] ^ d[4] ^ d[0] ^ c[8] ^ c[24] ^ c[28] ^ c[29];
+		newCrc[17] = d[6] ^ d[5] ^ d[1] ^ c[9] ^ c[25] ^ c[29] ^ c[30];
+		newCrc[18] = d[7] ^ d[6] ^ d[2] ^ c[10] ^ c[26] ^ c[30] ^ c[31];
+		newCrc[19] = d[7] ^ d[3] ^ c[11] ^ c[27] ^ c[31];
+		newCrc[20] = d[4] ^ c[12] ^ c[28];
+		newCrc[21] = d[5] ^ c[13] ^ c[29];
+		newCrc[22] = d[0] ^ c[14] ^ c[24];
+		newCrc[23] = d[6] ^ d[1] ^ d[0] ^ c[15] ^ c[24] ^ c[25] ^ c[30];
+		newCrc[24] = d[7] ^ d[2] ^ d[1] ^ c[16] ^ c[25] ^ c[26] ^ c[31];
+		newCrc[25] = d[3] ^ d[2] ^ c[17] ^ c[26] ^ c[27];
+		newCrc[26] = d[6] ^ d[4] ^ d[3] ^ d[0] ^ c[18] ^ c[24] ^ c[27] ^ c[28] ^ c[30];
+		newCrc[27] = d[7] ^ d[5] ^ d[4] ^ d[1] ^ c[19] ^ c[25] ^ c[28] ^ c[29] ^ c[31];
+		newCrc[28] = d[6] ^ d[5] ^ d[2] ^ c[20] ^ c[26] ^ c[29] ^ c[30];
+		newCrc[29] = d[7] ^ d[6] ^ d[3] ^ c[21] ^ c[27] ^ c[30] ^ c[31];
+		newCrc[30] = d[7] ^ d[4] ^ c[22] ^ c[28] ^ c[31];
+		newCrc[31] = d[5] ^ c[23] ^ c[29];
+	
+		return newCrc;
+	}
+
+	void loop() {
+		u32 crc = 0xFFFF_FFFF;
+		crc = compute_crc(crc, inp.read);
+		crc = compute_crc(crc, inp.read);
+		crc = compute_crc(crc, inp.read);
+		outp.write(~crc);
+	}
+}
+
+task BitwiseNeg {
+	properties {
+		test: {din: [ 0xD55D ], dout: [ 0x2AA2 ] }
+	}
+
+	in u16 din; out u16 dout;
+
+	void loop() {
+		u31 a = 0x4000_0000;
+		u31 b = ~a;
+		assert(b == 0x3FFF_FFFF);
+	
+		u32 c = 0x8000_0000;
+		u32 d = ~c;
+		assert(d == 0x7FFF_FFFF);
+	
+		u48 x = 0x8000_0000_0000;
+		u48 y = ~x;
+		assert(y == 0x7FFF_FFFF_FFFF);
+	
+		u64 e = 0x8000_0000_0000_0000;
+		u64 f = ~e;
+		assert(f == 0x7FFF_FFFF_FFFF_FFFF);
+	
+		u80 z = 0x1010_5555_DDDD_AAAA_CCCC;
+		u80 w = ~z;
+		assert(w == 0xEFEF_AAAA_2222_5555_3333);
+	
+		dout.write(~din.read);
+	}
+}
+
+task CounterIncrement {
+	properties {
+		test: {count: [ 0, 1, 2, 3, 0, 1, 2, 3 ] }
+	}
+
+	out sync u2 count;
+
+	u2 cnt;
+
+	void loop() {
+		count.write(cnt);
+		cnt++;
+	}
+}
+
+task Mask {
+	properties {
+		test: {inp: [ 65535, 32767, 112, 94, 3756 ], outp: [ 511, 511, 112, 94, 172 ] }
+	}
+
+	in u16 inp; out u9 outp;
+
+	void loop() {
+		outp.write(inp.read() & 511);
+	}
+}
+
+task OverflowUnsigned {
+	properties {
+		test: {stim: [ 0, 0, 0, 0, 0, 0, 0, 0 ], count: [ 1, 2, 3, 4, 5, 6, 7, 0 ] }
+	}
+
+	sync {
+		in u4 stim; out u3 count;
+	}
+
+	u4 dummy;
+	u3 icount;
+
+	void loop() {
+		dummy = stim.read();
+		icount++;
+		count.write(icount);
+	}
+}
+
+task OverflowUnsigned2 {
+	properties {
+		test: {stim: [ 0 ], count: [ 7 ] }
+	}
+
+	in u3 stim; out u3 count;
+
+	void loop() {
+		u3 dummy = stim.read();
+		dummy = (u3) 15;
+		count.write(dummy);
+	}
+}
+
+task Resize {
+	properties {
+		test: {inp: [ 65535, 32767, 112, 94, 3756 ], outp: [ 511, 511, 112, 94, 172 ] }
+	}
+
+	in u16 inp; out u9 outp;
+
+	void loop() {
+		outp.write((u9) inp.read());
+	}
+}
+
+task ShiftMask {
+	properties {
+		test: {inp: [ 65535, 0x0FFF, 32767, 32768 ], outp: [ 255, 128, 255, 0 ] }
+	}
+
+	in sync u16 inp; out sync u8 outp;
+
+	void loop() {
+		outp.write((inp.read() & 511) >> 1);
+		outp.write((u8) ((inp.read() & 3) << 7));
+	}
+}

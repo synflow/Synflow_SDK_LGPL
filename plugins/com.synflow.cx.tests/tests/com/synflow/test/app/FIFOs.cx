@@ -1,0 +1,119 @@
+/*******************************************************************************
+ * Copyright (c) 2012-2014 Synflow SAS.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Matthieu Wipliez
+ *    Nicolas Siret
+ *******************************************************************************/
+package com.synflow.test.app.fifos;
+
+network TestSynchronousFIFO {
+
+	fifo = new std.fifo.SynchronousFIFO({size: 16, width: 8});
+	
+	fib = new Fib();
+	sink = new Sink();
+
+	fifo.reads(fib.dout);
+	sink.reads(fifo.dout);
+
+}
+
+/*network TestAsynchronousFIFO {
+
+	fifo = new std.fifo.AsynchronousFIFO({size: 16, width: 8});
+
+	fib = new Fib();
+	sink = new Sink();
+
+	fifo.reads(fib.dout);
+	sink.reads(fifo.dout);
+
+}*/
+
+task Fib {
+	out sync ready u8 dout;
+
+	u8 n_1 = 1;
+	u8 n = 1;
+	u8 count;
+
+	/**
+	 * Fibonacci
+	 */
+	void setup() {
+		for (count = 0 ; count != 11 ; count++) {
+			u8 old_n = n;
+			n += n_1;
+			print("writing ", n, " to outp");
+			dout.write(n);
+	
+			n_1 = old_n;
+		}
+	
+		for (count = 0 ; count != 32 ; count++) {
+		}
+	
+		for (count = 0 ; count != 64 ; count++) {
+			dout.write(count);
+		}
+	
+		for (count = 0 ; count != 128 ; count++) {
+		}
+	
+		for (count = 0 ; count != 255 ; count++) {
+			dout.write(count);
+		}
+	}
+}
+
+task Sink {
+	in sync ready u8 inp;
+
+	u8 i;
+
+	void setup() {
+		for (; i < 15; i++) {
+		}
+	
+		print("start to read");
+		fence;
+
+		assert(inp.read == 2);
+		assert(inp.read == 3);
+		assert(inp.read == 5);
+		assert(inp.read == 8);
+		assert(inp.read == 13);
+		assert(inp.read == 21);
+		assert(inp.read == 34);
+		assert(inp.read == 55);
+		assert(inp.read == 89);
+		assert(inp.read == 144);
+		assert(inp.read == 233);
+
+		assert(inp.read == 0);
+		assert(inp.read == 1);
+
+		for (i = 0; i < 64; i++) {
+		}
+
+		for (i = 2; i < 16; i++) {
+			assert(inp.read == i);
+		}
+		assert(inp.read == i);
+
+		for (i = 0; i < 32; i++) {
+		}
+
+		for (i = 17; i < 64; i++) {
+			u8 din = inp.read();
+			print("i = ", i, " and din = ", din);
+			assert(din == i);
+		}
+		print("test passed.");
+	}
+}

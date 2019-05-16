@@ -1,0 +1,329 @@
+/*******************************************************************************
+ * Copyright (c) 2015 Synflow SAS.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Matthieu Wipliez
+ *******************************************************************************/
+package com.synflow.test.app.readys;
+
+network FastSourceSlowTarget {
+
+	source = new task {
+		out sync ready u4 dout;
+
+		void setup() {
+			dout.write(4);
+			dout.write(5);
+			dout.write(6);
+			dout.write(7);
+			dout.write(8);
+			dout.write(9);
+		}
+	};
+
+	expected = new task {
+		void setup() {
+			assert(source.dout.read() == 4);
+			print("asserted that source.dout.read() == 4");
+			idle(1);
+			assert(source.dout.read() == 5);
+			print("asserted that source.dout.read() == 5");
+			idle(1);
+			assert(source.dout.read() == 6);
+			idle(1);
+			assert(source.dout.read() == 7);
+			idle(1);
+			assert(source.dout.read() == 8);
+			idle(1);
+			assert(source.dout.read() == 9);
+			print("asserted that source.dout.read() == 9");
+			print("*** test completed successfully ***");
+		}
+	};
+
+}
+
+network SlowSourceFastTarget {
+
+	source = new task {
+		out sync ready u4 dout;
+
+		void setup() {
+			dout.write(4);
+			idle(1);
+			dout.write(5);
+			idle(2);
+			dout.write(6);
+			idle(3);
+			dout.write(7);
+			idle(4);
+			dout.write(8);
+			idle(5);
+			dout.write(9);
+		}
+	};
+
+	expected = new task {
+		void setup() {
+			assert(source.dout.read() == 4);
+			print("asserted that source.dout.read() == 4");
+			assert(source.dout.read() == 5);
+			assert(source.dout.read() == 6);
+			assert(source.dout.read() == 7);
+			assert(source.dout.read() == 8);
+			assert(source.dout.read() == 9);
+			print("asserted that source.dout.read() == 9");
+			print("*** test completed successfully ***");
+		}
+	};
+
+}
+
+network FastSourceTargetSlowThenFast {
+
+	source = new task {
+		out sync ready u4 dout;
+
+		void setup() {
+			dout.write(4);
+			dout.write(5);
+			dout.write(6);
+			dout.write(7);
+			dout.write(8);
+			dout.write(9);
+
+			dout.write(10);
+			dout.write(11);
+			dout.write(12);
+			dout.write(13);
+			dout.write(14);
+			dout.write(15);
+		}
+	};
+
+	expected = new task {
+		void setup() {
+			assert(source.dout.read() == 4);
+			print("asserted that source.dout.read() == 4");
+			idle(1);
+			assert(source.dout.read() == 5);
+			print("asserted that source.dout.read() == 5");
+			idle(1);
+			assert(source.dout.read() == 6);
+			idle(1);
+			assert(source.dout.read() == 7);
+			idle(1);
+			assert(source.dout.read() == 8);
+			idle(1);
+			assert(source.dout.read() == 9);
+
+			assert(source.dout.read() == 10);
+			assert(source.dout.read() == 11);
+			assert(source.dout.read() == 12);
+			assert(source.dout.read() == 13);
+			assert(source.dout.read() == 14);
+			assert(source.dout.read() == 15);
+			print("asserted that source.dout.read() == 15");
+			print("*** test completed successfully ***");
+		}
+	};
+
+}
+
+network PipelineBubble {
+
+	source = new task {
+		out sync ready u4 dout;
+
+		void setup() {
+			dout.write(4);
+			dout.write(5);
+			dout.write(6);
+			dout.write(7);
+			dout.write(8);
+			idle(4);
+			dout.write(9);
+
+			dout.write(10);
+			dout.write(11);
+			dout.write(12);
+			dout.write(13);
+			dout.write(14);
+			dout.write(15);
+			
+			dout.write(4);
+			dout.write(5);
+			dout.write(6);
+			dout.write(7);
+		}
+	};
+
+	expected = new task {
+		void setup() {
+			assert(source.dout.read() == 4);
+			print("asserted that source.dout.read() == 4");
+			assert(source.dout.read() == 5);
+			print("asserted that source.dout.read() == 5");
+			assert(source.dout.read() == 6);
+			assert(source.dout.read() == 7);
+			idle(4);
+			assert(source.dout.read() == 8);
+			assert(source.dout.read() == 9);
+
+			assert(source.dout.read() == 10);
+			assert(source.dout.read() == 11);
+			idle(4);
+			assert(source.dout.read() == 12);
+			assert(source.dout.read() == 13);
+			idle(1);
+			assert(source.dout.read() == 14);
+			idle(1);
+			assert(source.dout.read() == 15);
+			
+			idle(1);
+			assert(source.dout.read() == 4);
+			assert(source.dout.read() == 5);
+			assert(source.dout.read() == 6);
+			assert(source.dout.read() == 7);
+			print("asserted that source.dout.read() == 7");
+			print("*** test completed successfully ***");
+		}
+	};
+
+}
+
+network ReadyChain {
+
+	source = new task {
+		out sync ready u4 dout;
+
+		void setup() {
+			dout.write(4);
+			dout.write(5);
+			dout.write(6);
+			dout.write(7);
+
+			dout.write(8);
+			dout.write(9);
+			dout.write(10);
+			dout.write(11);
+
+			dout.write(12);
+			dout.write(13);
+			dout.write(14);
+			dout.write(15);
+		}
+	};
+
+	adder = new task {
+		void loop() {
+			subtracter.din.write(source.dout.read() + 2);
+			subtracter.din.write(source.dout.read() + 2);
+			subtracter.din.write(source.dout.read() + 2);
+		}
+	};
+
+	subtracter = new task {
+		sync ready {
+			in u5 din; out u4 dout;
+		}
+
+		void loop() {
+			dout.write((u4) (din.read() - 2));
+		}
+	};
+
+	expected = new task {
+		in sync ready u4 din;
+
+		void setup() {
+			assert(din.read() == 4);
+			assert(din.read() == 5);
+			assert(din.read() == 6);
+			assert(din.read() == 7);
+			idle(4);
+
+			assert(din.read() == 8);
+			assert(din.read() == 9);
+			assert(din.read() == 10);
+			assert(din.read() == 11);
+
+			assert(din.read() == 12);
+			assert(din.read() == 13);
+			assert(din.read() == 14);
+			assert(din.read() == 15);
+			print("asserted that din.read() == 15");
+			print("*** test completed successfully ***");
+			idle(1);
+		}
+	};
+	expected.reads(subtracter.dout);
+
+}
+
+network CombineReady {
+
+	source_a = new task {
+		out sync ready u4 a;
+
+		void setup() {
+			a.write(4);
+			a.write(3);
+			a.write(2);
+			a.write(1);
+			
+			a.write(4);
+			a.write(3);
+			a.write(2);
+			idle(6);
+			a.write(1);
+		}
+	};
+
+	source_b = new task {
+		out sync ready u4 b;
+
+		void setup() {
+			b.write(1);
+			b.write(2);
+			b.write(3);
+			b.write(4);
+			
+			idle(1);
+			b.write(1);
+			idle(2);
+			b.write(2);
+			b.write(3);
+			idle(1);
+			b.write(4);
+		}
+	};
+
+	adder = new task {
+		out sync ready u5 sum;
+		void loop() {
+			sum.write(source_a.a.read() + source_b.b.read());
+		}
+	};
+
+	expected = new task {
+		void setup() {
+			assert(adder.sum.read() == 5);
+			assert(adder.sum.read() == 5);
+			assert(adder.sum.read() == 5);
+			assert(adder.sum.read() == 5);
+
+			assert(adder.sum.read() == 5);
+			assert(adder.sum.read() == 5);
+			assert(adder.sum.read() == 5);
+			assert(adder.sum.read() == 5);
+			print("asserted that adder.sum.read() == 5");
+			print("*** test completed successfully ***");
+		}
+	};
+
+}

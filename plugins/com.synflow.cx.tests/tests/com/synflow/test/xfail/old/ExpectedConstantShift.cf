@@ -1,0 +1,6 @@
+port in u32 inn, u8 inp;
+port out u32 outp;
+
+void main() {
+  outp.write(inn.read() << inp.read());
+}

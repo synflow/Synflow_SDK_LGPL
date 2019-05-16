@@ -1,0 +1,12 @@
+port in u16 _in;
+
+port out u8 outp;
+
+void main() {
+	f(3);
+}
+
+int f(int x) {
+	outp.write(x);
+	return x;
+}

@@ -1,0 +1,7 @@
+port in u32 x, out y;
+
+bool v;
+
+void main() {
+	v++;
+}

@@ -1,0 +1,4 @@
+port in i1 inp;
+
+void main() {
+}

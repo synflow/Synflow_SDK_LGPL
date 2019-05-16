@@ -1,0 +1,8 @@
+port out u8 o;
+
+void main() {
+  int x = 0;
+  int y;
+  y++
+  o.write(y);
+}

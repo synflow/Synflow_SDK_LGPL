@@ -1,0 +1,9 @@
+port in u4 data;
+port out u4 o;
+
+u4 x;
+
+void main() {
+	x = data.read() + data.read();
+	o.write(x);
+}

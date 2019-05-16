@@ -1,0 +1,29 @@
+<project name="BuildSynflow" default="main" basedir=".">
+	<description>
+    Ant build file to update composite repository
+  </description>
+
+	<property name="keyfile">${user.home}/.ssh/id_rsa</property>
+	<property name="nightly">upload@synflow.com:nightly</property>
+
+	<!-- Updates the repository with the newly copied contents -->
+	<target name="main" description="Updates the composite repository.">
+		<echo>running in ${basedir}</echo>
+		<mkdir dir="target/composite" />
+
+		<scp keyfile="${keyfile}" file="${nightly}/compositeArtifacts.xml" todir="target/composite" />
+		<scp keyfile="${keyfile}" file="${nightly}/compositeContent.xml" todir="target/composite" />
+
+		<p2.composite.repository>
+			<repository location="file:/${basedir}/target/composite" name="Synflow nightly repository" />
+			<add>
+				<repository location="http://nightly.synflow.com/${buildQualifier}" />
+			</add>
+		</p2.composite.repository>
+
+		<scp keyfile="${keyfile}" todir="${nightly}">
+			<fileset dir="target/composite"/>
+		</scp>
+	</target>
+
+</project>

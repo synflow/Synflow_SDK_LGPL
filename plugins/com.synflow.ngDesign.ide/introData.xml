@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<extensions>
+  <page id="overview">
+    <hidden>
+      <extension id="org.eclipse.egit" importance="low" />
+      <extension id="org.eclipse.jdt" importance="low" />
+      <extension id="org.eclipse.m2e" importance="low"/>
+      <extension id="org.eclipse.ui.workbench" importance="low"/>
+    </hidden>
+  </page>
+
+  <page id="samples">
+    <hidden>
+      <extension id="org.eclipse.jdt" importance="low"/>
+    </hidden>
+  </page>
+
+  <page id="tutorials">
+    <group path="page-content/bottom-left" default="true" />
+    <group path="page-content/bottom-right" default="true" />
+    <group path="page-content/top-left" />
+    <group path="page-content/top-right" />
+
+    <hidden>
+      <extension id="org.eclipse.egit" importance="low" />
+      <extension id="org.eclipse.jdt" importance="low" />
+      <extension id="org.eclipse.team" importance="low" />
+    </hidden>
+  </page>
+
+  <page id="whatsnew">
+    <hidden>
+      <extension id="org.eclipse.egit" importance="low" />
+      <extension id="org.eclipse.jdt" importance="low"/>
+      <extension id="org.eclipse.team" importance="low"/>
+      <extension id="org.eclipse.ui.workbench" importance="low"/>
+      <extension id="org.eclipse.ui.workbench.migration" importance="low"/>
+      <extension id="org.eclipse.ui.workbench.news" importance="low"/>
+    </hidden>
+  </page>
+</extensions>

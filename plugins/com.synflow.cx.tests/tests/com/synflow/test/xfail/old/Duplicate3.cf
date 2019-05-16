@@ -1,0 +1,10 @@
+port in bool p;
+
+void main() {
+}
+
+void f() {
+}
+
+int f() {
+}

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+  xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.synflow</groupId>
+    <artifactId>com.synflow.ngDesign.releng</artifactId>
+    <version><!-- ${ngDesign-version} -->0.92.0-SNAPSHOT</version>
+    <relativePath>com.synflow.ngDesign.releng</relativePath>
+  </parent>
+
+  <groupId>com.synflow</groupId>
+  <artifactId>com.synflow.ngDesign.releng.build</artifactId>
+  <version><!-- ${ngDesign-version} -->0.92.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <modules>
+    <module>../features/com.synflow.ngDesign.feature</module>
+    <module>../features/com.synflow.ngDesign.plugins</module>
+    <module>../fragments/com.synflow.ngDesign.libraries</module>
+    <module>../plugins/com.synflow.core</module>
+    <module>../plugins/com.synflow.cx</module>
+    <module>../plugins/com.synflow.cx.ui</module>
+    <module>../plugins/com.synflow.ngDesign</module>
+    <module>../plugins/com.synflow.ngDesign.doc</module>
+    <module>../plugins/com.synflow.ngDesign.ide</module>
+    <module>../plugins/com.synflow.ngDesign.ui</module>
+    <!-- skip p2 for now <module>p2</module> -->
+    <module>product</module>
+  </modules>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <!-- runs an Ant build file using the antRunner application -->
+        <plugin>
+          <groupId>org.eclipse.tycho.extras</groupId>
+          <artifactId>tycho-eclipserun-plugin</artifactId>
+          <version>${tycho.version}</version>
+          <configuration>
+            <repositories>
+              <repository>
+                <id>eclipse-2018-12</id>
+                <layout>p2</layout>
+                <url>http://download.eclipse.org/releases/2018-12</url>
+              </repository>
+            </repositories>
+
+            <dependencies>
+              <dependency>
+                <artifactId>org.eclipse.ant.core</artifactId>
+                <type>eclipse-plugin</type>
+              </dependency>
+              <dependency>
+                <artifactId>org.apache.ant</artifactId>
+                <type>eclipse-plugin</type>
+              </dependency>
+
+              <!-- required for repository tools -->
+              <dependency>
+                <artifactId>org.eclipse.core.net</artifactId>
+                <type>eclipse-plugin</type>
+              </dependency>
+              <dependency>
+                <artifactId>org.eclipse.equinox.ds</artifactId>
+                <type>eclipse-plugin</type>
+              </dependency>
+              <dependency>
+                <artifactId>org.eclipse.equinox.p2.transport.ecf</artifactId>
+                <type>eclipse-plugin</type>
+              </dependency>
+
+              <!-- for p2.composite.repository Ant task -->
+              <dependency>
+                <artifactId>org.eclipse.equinox.p2.repository.tools</artifactId>
+                <type>eclipse-plugin</type>
+              </dependency>
+
+              <!-- for p2: require JSch so we can use it within Ant script -->
+              <dependency>
+                <artifactId>com.jcraft.jsch</artifactId>
+                <type>eclipse-plugin</type>
+              </dependency>
+            </dependencies>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+</project>

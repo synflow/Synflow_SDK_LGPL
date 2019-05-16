@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension-point id="injection" name="injection" schema="schema/injection.exsd"/>
+   <extension
+         id="nature"
+         point="org.eclipse.core.resources.natures">
+      <runtime>
+         <run
+               class="com.synflow.core.SynflowNature">
+         </run>
+      </runtime>
+      <builder
+            id="com.synflow.core.builder">
+      </builder>
+   </extension>
+   <extension
+         id="builder"
+         name="Synflow builder"
+         point="org.eclipse.core.resources.builders">
+      <builder
+            callOnEmptyDelta="false"
+            hasNature="true"
+            isConfigurable="false"
+            supportsConfigurations="true">
+         <run
+               class="com.synflow.core.InjectableExtensionFactory">
+            <parameter
+                  name="className"
+                  value="com.synflow.core.internal.builder.SynflowBuilder">
+            </parameter>
+         </run></builder>
+   </extension>
+   <extension
+         point="org.eclipse.core.expressions.propertyTesters">
+      <propertyTester
+            class="com.synflow.core.internal.CorePropertyTester"
+            id="com.synflow.core.propertyTester"
+            namespace="com.synflow.core"
+            properties="isPackage,isSourceFolder"
+            type="org.eclipse.core.resources.IResource">
+      </propertyTester>
+   </extension>
+   <extension point="org.eclipse.emf.ecore.generated_package">
+      <!-- @generated Core -->
+      <package
+            uri="http://www.synflow.com/2013/Dpn"
+            class="com.synflow.models.dpn.DpnPackage"
+            genModel="model/Core.genmodel"/>
+   </extension>
+   <extension point="org.eclipse.emf.ecore.generated_package">
+      <!-- @generated Core -->
+      <package
+            uri="http://www.synflow.com/2013/Graph"
+            class="com.synflow.models.graph.GraphPackage"
+            genModel="model/Core.genmodel"/>
+   </extension>
+   <extension point="org.eclipse.emf.ecore.generated_package">
+      <!-- @generated Core -->
+      <package
+            uri="http://www.synflow.com/2013/Ir"
+            class="com.synflow.models.ir.IrPackage"
+            genModel="model/Core.genmodel"/>
+   </extension>
+   <extension
+         point="org.eclipse.emf.ecore.extension_parser">
+      <parser
+            class="com.synflow.models.ir.impl.IrResourceFactoryImpl"
+            type="ir">
+      </parser>
+   </extension>
+</plugin>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<introContent>
+  <extensionContent id="com.synflow.ngDesign" path="samples/@">
+    <group label="Samples of Cx code" id="samples" style-id="content-group">
+      <link url="http://org.eclipse.ui.intro/runAction?class=com.synflow.ngDesign.intro.CheckoutIntroAction&amp;pluginId=com.synflow.ngDesign.ide&amp;url=https://github.com/synflow/examples.git" label="Examples" style-id="content-link">
+        <text>Examples of projects written in Cx, explained in our online course. Includes lighting LEDs, printing "Hello World!" on a 7-segment display.</text>
+      </link>
+
+      <link url="http://org.eclipse.ui.intro/runAction?class=com.synflow.ngDesign.intro.CheckoutIntroAction&amp;pluginId=com.synflow.ngDesign.ide&amp;url=https://github.com/synflow/sha-256.git" label="SHA-256" style-id="content-link">
+        <text>Cx implementation of SHA-256.</text>
+      </link>
+      <link url="http://org.eclipse.ui.intro/runAction?class=com.synflow.ngDesign.intro.CheckoutIntroAction&amp;pluginId=com.synflow.ngDesign.ide&amp;url=https://github.com/synflow/ethernet-mac.git" label="Ethernet MAC" style-id="content-link">
+        <text>Complete description of an Ethernet MAC in Cx.</text>
+      </link>
+    </group>
+  </extensionContent>
+</introContent>

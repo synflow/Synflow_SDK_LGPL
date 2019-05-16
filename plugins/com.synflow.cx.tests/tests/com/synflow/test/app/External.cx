@@ -1,0 +1,35 @@
+package com.synflow.test.app.external;
+
+network TestExternal {
+
+	properties {
+		clocks: ["clock_in", "clock_out"],
+		test: {
+			din:  [   53, null, null, 727, null, null,  7, null, null, null, null, null, 433, null, null, 2963, null, null,  661, null, null, null, null ],
+			dout: [ null,   0,   53,   53, 53,  727,  727,  727,    7,    7,   7,    7,    7,    7,  433,  433,  433, 2963, 2963, 2963,  661,  661,  661 ]
+		}
+	}
+
+	in sync u32 din; out u32 dout;
+
+	sync_mux = new SynchronizerMux({width: 32, stages: 2});
+	sync_mux.reads(din);
+	sync_mux.writes(dout);
+}
+
+task SynchronizerMux {
+
+	properties {
+		clocks: ["din_clock", "dout_clock"],
+		implementation: {
+			type: "external",
+			file: "../../fragments/com.synflow.ngDesign.libraries/lib/verilog/src/std/lib/SynchronizerMux.v",
+			dependencies: ["../../fragments/com.synflow.ngDesign.libraries/lib/verilog/src/std/lib/SynchronizerFF.v"]
+		}
+	}
+
+	const int width = 16, stages = 2;
+
+	in sync uint<width> din; out uint<width> dout;
+
+}

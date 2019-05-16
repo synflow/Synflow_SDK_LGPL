@@ -1,0 +1,262 @@
+/*******************************************************************************
+ * Copyright (c) 2012-2014 Synflow SAS.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Matthieu Wipliez
+ *    Nicolas Siret
+ *******************************************************************************/
+package com.synflow.test.app.rams;
+
+import std.mem.SinglePortRAM;
+
+network TestSinglePortRam {
+
+	typedef u8 addr_t;
+
+	readerWriter = new task {
+		addr_t i = 2;
+
+		void setup() {
+			ram.address.write(7);
+			ram.data.write(42);
+
+			ram.address.write(0);
+			ram.data.write(0);
+			fence;
+			assert(ram.q.read == 42); // output from first write
+			ram.address.write(7);
+
+			assert(ram.q.read == 0); // output from second write 
+			assert(ram.q.read == 42); // output from read
+		}
+	};
+
+	ram = new SinglePortRAM({size: 256, width: 12});
+
+	// this inner task is a task with no successor that defines the end condition for simulation in C
+	// i.e. just run 30 cycles
+	simulate_30_cycles = new task {
+		void setup() {
+			idle(30);
+		}
+	};
+
+}
+
+network TestSinglePortRamWithOutputRegister {
+
+	ram = new SinglePortRAM({size: 8, width: 7, addOutputRegister: true});
+	
+	ctrl = new task {
+		void setup() {
+			ram.address.write(7);
+			ram.data.write(42);
+
+			ram.address.write(0);
+			ram.data.write(0);
+			idle(1); // wait one cycle for ram output to be 42 (note difference with normal test idle instead of fence)
+			assert(ram.q.read == 42); // output from first write
+
+			assert(ram.q.read == 0); // output from second write
+			ram.address.write(7);
+
+			assert(ram.q.read == 0); // still 0
+			assert(ram.q.read == 0); // still 0 due to additional output register
+			assert(ram.q.read == 42);
+		}
+	};
+
+	// this inner task is a task with no successor that defines the end condition for simulation in C
+	// i.e. just run 30 cycles
+	simulate_30_cycles = new task {
+		void setup() {
+			idle(30);
+		}
+	};
+
+}
+
+network TestSinglePortRamWithWriteShift {
+
+	ram = new SinglePortRAM({size: 8, width: 7, writeShiftMode: true});
+	
+	ctrl = new task {
+		void setup() {
+			ram.address.write(7);
+			ram.data.write(0);
+
+			ram.address.write(7);
+			ram.data.write(42);
+
+			ram.address.write(7);
+			ram.data.write(18);
+
+			fence; // ignore output from first write (old value is undefined)
+
+			assert(ram.q.read == 0); // output from second write is old value of first write
+			assert(ram.q.read == 42); // output from third write is old value of second write
+			assert(ram.q.read == 18); // output is old value of third write
+		}
+	};
+
+	// this inner task is a task with no successor that defines the end condition for simulation in C
+	// i.e. just run 30 cycles
+	simulate_30_cycles = new task {
+		void setup() {
+			idle(30);
+		}
+	};
+
+}
+
+network TestSinglePortRamWithWriteShiftAndOutputRegister {
+
+	ram = new SinglePortRAM({size: 8, width: 7, writeShiftMode: true, addOutputRegister: true});
+	
+	ctrl = new task {
+		void setup() {
+			ram.address.write(7);
+			ram.data.write(0);
+
+			ram.address.write(7);
+			ram.data.write(42);
+
+			ram.address.write(7);
+			ram.data.write(18);
+
+			// ignore output from first write (old value is undefined)
+			// use idle because of additional output register
+			idle(1);
+
+			assert(ram.q.read == 0); // output from second write is old value of first write
+			assert(ram.q.read == 42); // output from third write is old value of second write
+			assert(ram.q.read == 18); // output is old value of third write
+		}
+	};
+
+	// this inner task is a task with no successor that defines the end condition for simulation in C
+	// i.e. just run 30 cycles
+	simulate_30_cycles = new task {
+		void setup() {
+			idle(30);
+		}
+	};
+
+}
+
+task Controller {
+
+	out addr_t addr, sync u12 dout; in u12 q;
+
+	typedef u8 addr_t;
+
+	addr_t i = 2;
+
+	void setup() {
+		i = 2;
+		addr.write(i);
+		dout.write(i << 1);
+
+		i = 3;
+		addr.write(i);
+		dout.write(i << 1);
+
+		i = 2;
+		addr.write(i);
+		fence;
+
+		i = 3;
+		addr.write(i);
+		fence;
+
+		q.read;
+		q.read;
+	}
+}
+
+network TestDualPortRam {
+
+	properties {
+		clocks: ["clk_a", "clk_b"]
+	}
+
+	ram = new std.mem.DualPortRAM({size: 256, width: 12});
+
+	ctrl1 = new Controller({clock: "clk_a"}); ctrl2 = new Controller({clock: "clk_b"});
+
+	ram.reads(ctrl1.addr, ctrl1.dout, ctrl2.addr, ctrl2.dout);
+	ram.writes(ctrl1.q, ctrl2.q);
+
+	dummy = new task {
+		properties {clock: "clk_a"}
+		void setup() {
+			idle(30);
+		}
+	};
+}
+
+network TestPseudoDualPortRam {
+
+	reader = new task {
+		in u16 din; out u4 address, sync u16 dout;
+
+		u16 x;
+		u4 i = 15;
+
+		void setup() {
+			// 15 cycles waiting
+			for (i = 0; i < 15; i++) {
+			}
+
+			i = 0;
+			address.write(i);
+			i++;
+
+			address.write(i);
+			i++;
+		}
+
+		void loop() {
+			x = din.read;
+			assert(x == ((i - 2) & 0b1111) << 1);
+			dout.write(x);
+
+			address.write(i);
+			i++;
+		}
+	};
+
+	ram = new std.mem.PseudoDualPortRAM({size: 16, width: 16});
+
+	writer = new task {
+		out u4 address, sync u16 dout;
+
+		u4 i;
+
+		void setup() {
+			i = 15;
+			address.write(i);
+			dout.write(i << 1);
+			i--;
+
+			for (; i != 15; i--) {
+				address.write(i);
+				dout.write(i << 1);
+			}
+		}
+	};
+
+	ram.reads(reader.address, writer.address, writer.dout);
+	reader.reads(ram.q);
+
+	dummy = new task {
+		void setup() {
+			idle(50);
+		}
+	};
+
+}

@@ -1,0 +1,7 @@
+port out bool res;
+
+u2 w;
+
+void main() {
+	res.write(w < 0);
+}

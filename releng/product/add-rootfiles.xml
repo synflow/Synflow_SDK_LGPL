@@ -1,0 +1,51 @@
+<project name="Add root files" default="main" basedir=".">
+  <description>
+    Ant build file to add root files to products
+  </description>
+
+  <!-- main task -->
+  <target name="main" description="Adds root files">
+    <echo>running in ${basedir}</echo>
+
+    <antcall target="add-rootfiles">
+      <param name="os" value="win32"/>
+      <param name="ws" value="win32"/>
+      <param name="arch" value="x86_64"/>
+    </antcall>
+
+    <antcall target="add-rootfiles">
+      <param name="os" value="linux"/>
+      <param name="ws" value="gtk"/>
+      <param name="arch" value="x86_64"/>
+    </antcall>
+
+    <antcall target="add-rootfiles">
+      <param name="os" value="macosx"/>
+      <param name="ws" value="cocoa"/>
+      <param name="arch" value="x86_64"/>
+    </antcall>
+
+    <antcall target="add-rootfiles">
+      <param name="os" value="win32"/>
+      <param name="ws" value="win32"/>
+      <param name="arch" value="x86"/>
+    </antcall>
+
+    <antcall target="add-rootfiles">
+      <param name="os" value="linux"/>
+      <param name="ws" value="gtk"/>
+      <param name="arch" value="x86"/>
+    </antcall>
+  </target>
+
+  <target name="add-rootfiles">
+    <echo>copying root files to ngDesign/${os}/${ws}/${arch}</echo>
+    <!-- use cp because Ant's copy task is brain-damaged when it comes to permissions. -->
+    <exec executable="cp" os="Linux">
+      <arg value="-R"/>
+      <arg value="rootfiles/${os}/${ws}/${arch}"/>
+      <arg value="target/products/ngDesign/${os}/${ws}"/>
+    </exec>
+  </target>
+
+</project>

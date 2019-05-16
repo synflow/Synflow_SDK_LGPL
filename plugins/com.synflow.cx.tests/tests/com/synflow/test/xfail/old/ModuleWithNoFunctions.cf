@@ -1,0 +1,6 @@
+port in bool x;
+
+port out bool y;
+
+int s;
+int t = 3;

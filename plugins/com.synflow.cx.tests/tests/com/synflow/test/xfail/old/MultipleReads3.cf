@@ -1,0 +1,8 @@
+port in u4 data;
+port out u4 o;
+
+void main() {
+	if (data.read() + data.read() > 3) {
+		o.write(5);
+	}
+}

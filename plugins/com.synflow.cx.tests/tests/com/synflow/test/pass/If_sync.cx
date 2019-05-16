@@ -1,0 +1,206 @@
+/*******************************************************************************
+ * Copyright (c) 2012-2014 Synflow SAS.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Matthieu Wipliez
+ *    Nicolas Siret
+ *******************************************************************************/
+package com.synflow.test.pass.if_sync;
+
+task IfElseIfWithRead {
+	properties {
+		num_states: 2, num_transitions: 3,
+		test: {cond: [ 1, 4, 3, 5, null ], o: [ null, 4, 42, 42, null ] }
+	}
+
+	in sync u3 cond;
+	out sync u8 o;
+
+	void loop() {
+		u3 c = cond.read;
+		if (c == 1) {
+			o.write(cond.read);
+		} else {
+			o.write(42);
+		}
+	}
+}
+
+task IfSeries {
+	properties {
+		num_states: 2, num_transitions: 4,
+		test: {
+			cond: [ true, true, false, true, false, false ],
+			a: [ 1,       2, null,     3, null, null ],
+			b: [ null, null, 1024,  null, 1025, 1026 ],
+			o: [ 1,    null, null,  null, null, 1026 ],
+			o2: [ null,    2, 1024,     3, 1025, null ]
+		}
+	}
+
+	in sync bool cond, sync u16 a, sync b; out sync u16 o, sync o2;
+
+	u16 count;
+
+	void loop() {
+		if (cond.read()) {
+			o.write(a.read());
+		} else {
+			o2.write(b.read());
+		}
+	
+		if (cond.read()) {
+			o2.write(a.read());
+		} else {
+			o.write(b.read());
+		}
+	}
+}
+
+task IfSeries2 {
+	properties {
+		num_states: 2, num_transitions: 4,
+		test: {
+			cond: [ true, true, false, true, false, false ],
+			a: [    1,    2,  null,     3, null, null ],
+			o: [    1, null,  null,  null, null, null ],
+			o2: [ null,    2,  null,     3, null, null ]
+		}
+	}
+
+	in sync bool cond, sync u16 a; out sync u16 o, sync o2;
+
+	void loop() {
+		if (cond.read()) {
+			o.write(a.read());
+		}
+	
+		if (cond.read()) {
+			o2.write(a.read());
+		}
+	}
+}
+
+task IfSeries3 {
+	properties {
+		num_states: 2, num_transitions: 3,
+		test: {	cond: [ true, true, false, true, false, false ],
+			a: [ null,    1,  null,    2,  null,  null ],
+			o: [ null,    2,  null,    3,  null,  null ] }
+	}
+
+	in sync bool cond, sync u16 a; out sync u16 o;
+
+	u16 count;
+
+	void loop() {
+		bool c = cond.read();
+		if (c) {
+			count++;
+		}
+	
+		if (cond.read()) {
+			o.write((u16) (a.read() + count));
+		}
+	}
+}
+
+task InitIfReading {
+	// Limits its input to 63
+	properties {
+		test: {I: [ 0, 0, 63, 64, 511 ], O: [ null, 0, 63, 63, 63 ] }
+	}
+
+	in sync u9 I; out sync u6 O;
+
+	void setup() {
+		if (I.read > 0) {
+			
+		} else {
+			
+		}
+	}
+
+	void loop() {
+		u9 local = I.read();
+		O.write(local > 63 ? 63 : (u6) local);
+	}
+}
+
+task IfNoLostCycle {
+	properties {
+		num_states: 2, num_transitions: 4,
+		test: {
+			din:    [     0,     1,     2,    3, null,    4, null,    5 ],
+			is100M: [ false, false, false, true, true, true, true, true ],
+			dout:   [  null,  null,  null, null, null, null, null,    7 ] }
+	}
+
+	in sync u8 din, bool is100M;
+	out sync u8 dout;
+
+	u8 count;
+
+	void loop() {
+		while (din.read < 5) {
+			print("ignoring din = ", din.read, " < 5");
+			if (is100M.read) {
+				print("100M a");
+				count++;
+				fence;
+				print("100M b");
+			} else {
+				print("1G");
+			}
+			count++;
+			print("merged");
+		}
+
+		dout.write(count);
+	}
+
+}
+
+task IfNested {
+	properties {
+		num_states: 7, num_transitions: 9,
+		test: {
+			din:  [    1, 0x80,    6,    4,    0,    1,   18 ],
+			dout: [ null, null, null, null, null, null,   18 ] }
+	}
+
+	sync {
+		in u8 din;
+		out u8 dout;
+	}
+
+	u3 i;
+
+	void loop() {
+		u8 htype = din.read;
+		u8 proto = din.read;
+
+		if (htype == 1 && proto == 0x80) {
+			u8 hlen = din.read; // Hardware Address Length
+			u8 plen = din.read; // Protocol Address Length
+			u16 op = din.read; // Operation
+			op = (ushort) (op << 8 | din.read);
+
+			print("hlen = ", hlen);
+			print("plen = ", plen);
+			print("op = ", op);
+			if (hlen == 6 && plen == 4 && op == 1) {
+				// IPv4 request over Ethernet
+				print("got an ARP request");
+				dout.write(din.read());
+			} else {
+				print("oops not an ARP request");
+			}
+		}
+	}
+
+}

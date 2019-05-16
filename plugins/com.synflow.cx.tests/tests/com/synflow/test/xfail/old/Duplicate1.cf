@@ -1,0 +1,6 @@
+port in bool p;
+
+u5 p;
+
+void main() {
+}

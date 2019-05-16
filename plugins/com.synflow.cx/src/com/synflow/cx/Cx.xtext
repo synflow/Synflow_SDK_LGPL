@@ -1,0 +1,424 @@
+//
+//  This file is part of the ngDesign SDK.
+// *
+// * Copyright (c) 2019 Synflow SAS.
+// *
+// * ngDesign is free software: you can redistribute it and/or modify
+// * it under the terms of the GNU General Public License as published by
+// * the Free Software Foundation, either version 3 of the License, or
+// * (at your option) any later version.
+// *
+// * ngDesign is distributed in the hope that it will be useful,
+// * but WITHOUT ANY WARRANTY; without even the implied warranty of
+// * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// * GNU General Public License for more details.
+// *
+// * You should have received a copy of the GNU General Public License
+// * along with ngDesign.  If not, see <https://www.gnu.org/licenses/>.
+// *
+
+grammar com.synflow.cx.Cx hidden(WS, ML_COMMENT, SL_COMMENT)
+
+import "http://www.eclipse.org/emf/2002/Ecore" as ecore
+import "http://www.synflow.com/cx/Cx"
+
+///////////////////////////////////////////////////////////////////////////////
+// top-level entity
+///////////////////////////////////////////////////////////////////////////////
+
+Module:
+	'package' package = QualifiedName ';'
+	(imports += Import)*
+	(entities += CxEntity)*
+;
+
+Import: 'import' imported += Imported (',' imported += Imported)* ';'
+;
+
+Imported: type=[Named|QualifiedName] (wildcard ?= '.' '*')?;
+
+QualifiedName:
+	ValidID (=> '.' ValidID)*
+;
+
+ValidID:
+	ID;
+
+CxEntity: Bundle | Task | Network;
+
+///////////////////////////////////////////////////////////////////////////////
+// task and network level
+///////////////////////////////////////////////////////////////////////////////
+
+Task:
+	'task' name=ValidID '{'
+		(imports += Import)*
+		('properties' properties=Obj)?
+		(portDecls += PortDecl | types += Typedef | decls += VarDecl)*
+	'}'
+;
+
+Bundle:
+	'bundle' name=ValidID ('extends' extends = [Bundle|QualifiedName])? '{'
+		(imports += Import)*
+		('properties' properties=Obj)?
+		(types += Typedef | decls += VarDecl)*
+	'}'
+;
+
+InstAnonTask returns Task: {Task}
+	'task' '{'
+		(imports += Import)*
+		('properties' properties=Obj)?
+		(portDecls += PortDecl | types += Typedef | decls += VarDecl)*
+	'}'
+;
+
+Network:
+	'network' name=ValidID '{'
+		(imports += Import)*
+		('properties' properties=Obj)?
+		(instances += Inst | portDecls += PortDecl | types += Typedef | connects += Connect)*
+	'}'
+;
+
+Connect:
+	(instance = [Inst|QualifiedName] | this ?= 'this') '.' type=('reads' | 'writes') '(' ports += VarRef (',' ports += VarRef)* ')' ';'
+;
+
+Inst:
+	name=ValidID '=' 'new'
+		(entity=[Instantiable|QualifiedName] '(' (arguments = Obj)? ')'
+		| task=InstAnonTask) ';'
+;
+
+Array:
+	{Array} '[' (elements += Element (',' elements += Element)*)? ']'
+;
+
+Obj:
+	{Obj} '{' (members += Pair (',' members += Pair)*)? '}'
+;
+
+Pair:
+	key=ID ':' value=Element
+;
+
+Element:
+	Primitive | Obj | Array
+;
+
+Primitive: value=(CxExpression | Null);
+Null: {Null} 'null';
+
+///////////////////////////////////////////////////////////////////////////////
+// declarations
+///////////////////////////////////////////////////////////////////////////////
+
+// typedef declaration
+Typedef: 'typedef' type=CxType name=ValidID ';';
+
+PortDecl: SinglePortDecl | MultiPortDecl;
+SinglePortDecl: direction=('in' | 'out') ports += PortDef (',' ports += PortDef)* ';';
+PortDef: (syncOld?='sync' (readyOld?='ready' | ackOld?='ack')?)? var=PortVariable
+	('(' (
+			(sync?='sync' combinational?='combinational'?)
+			| (combinational?='combinational' sync?='sync'?)
+			| ready?='ready'
+			| ack?='ack'
+		)?
+	')')?
+;
+
+MultiPortDecl: sync?='sync' (ready?='ready' | ack?='ack')? '{' decls += SyncPortDecl* '}';
+SyncPortDecl returns SinglePortDecl: direction=('in' | 'out') ports += SyncPortDef (',' ports += SyncPortDef)* ';';
+SyncPortDef returns PortDef: (ready?='ready' | ack?='ack')? var=PortVariable;
+
+PortVariable returns Variable: (type = CxType)? name = ValidID;
+
+// variable/function declaration
+VarDecl:
+	(constant ?= 'const')?
+	(type = CxType | void ?= 'void')
+
+	(variables += Function
+	| variables += StateVar (',' variables += StateVar)* ';')
+;
+
+Function returns Variable:
+	name = ValidID
+	'(' (parameters += Parameter (',' parameters += Parameter)*)? ')'
+	body = Block
+;
+
+StateVar returns Variable:
+	name = ValidID ('[' dimensions += CxExpression ']')* ('=' value=Value)?;
+
+Parameter returns Variable: type = CxType name = ValidID;
+
+// initial value
+Value returns CxExpression: ExpressionList | CxExpression;
+ExpressionList:
+	{ExpressionList} '{' (values += Value (',' values += Value)* )? '}';
+
+///////////////////////////////////////////////////////////////////////////////
+// statements
+///////////////////////////////////////////////////////////////////////////////
+
+VarRef: objects += [Named|ValidID] ('.' objects += [Named|ValidID])*;
+
+StatementAssign:
+	target=ExpressionVariable
+		(	(op='++' | op='--')
+		|	((op='=' | op=ASSIGN_OP) value=CxExpression))?;
+
+terminal ASSIGN_OP:
+	'&=' | '|=' | '^=' |
+	'&&=' | '||=' |
+	'+=' | '-=' | '*=' | '/=' | '%=' |
+	'<<=' | '>>='
+;
+
+StatementAssert:
+	'assert' '(' condition = CxExpression ')' ';';
+
+Block: {Block}
+	'{'
+		stmts += Statement*
+	'}'
+;
+
+StatementFence: {StatementFence} 'fence' ';';
+
+StatementFor returns StatementLoop:
+	'for' '(' init = (StatementAssign | StatementVariable)? ';' condition=CxExpression ';' after=StatementAssign? ')'
+		body = Block;
+
+StatementIdle: {StatementIdle} 'idle' '(' numCycles=CxExpression ')' ';';
+
+StatementIf:
+	branches += Branch
+	('else' branches += Branch)*
+	('else' branches += BranchElse)?;
+
+Branch:
+	'if' '(' condition = CxExpression ')'
+		body = Block;
+
+BranchElse returns Branch:
+	body = Block;
+
+StatementLabeled: label=ID ':' stmt=Statement;
+
+StatementPrint:
+	{StatementPrint} 'print' '(' (args += CxExpression (',' args += CxExpression)*)? ')' ';';
+
+StatementReturn:
+	{StatementReturn} 'return' value = CxExpression? ';'
+;
+
+StatementVariable:
+	(constant ?= 'const')?
+	type = CxType
+	variables += LocalVar (',' variables += LocalVar)*;
+
+LocalVar returns Variable:
+	name = ValidID ('[' dimensions += CxExpression ']')* ('=' value=CxExpression)?;
+
+StatementWhile returns StatementLoop:
+	'while' '(' condition=CxExpression ')'
+		body = Block;
+
+StatementWrite:
+	port=VarRef '.' 'write' '(' value=CxExpression ')' ';'
+;
+
+Statement:
+	(StatementAssign ';')
+	| StatementAssert
+	| StatementFence
+	| StatementFor
+	| StatementIdle
+	| StatementIf
+	| StatementLabeled
+	| StatementPrint
+	| StatementReturn
+	| (StatementVariable ';')
+	| StatementWhile
+	| StatementWrite;
+
+///////////////////////////////////////////////////////////////////////////////
+// expressions
+///////////////////////////////////////////////////////////////////////////////
+
+CxExpression:
+	ExpressionOr ({ExpressionIf.condition=current} operator='?' then=CxExpression ':' else=CxExpression)?;
+ExpressionOr returns CxExpression:
+	ExpressionAnd ({ExpressionBinary.left=current} operator='||' right=ExpressionAnd)*;
+ExpressionAnd returns CxExpression:
+	ExpressionBitor ({ExpressionBinary.left=current} operator='&&' right=ExpressionBitor)*;
+ExpressionBitor returns CxExpression:
+	ExpressionBitxor ({ExpressionBinary.left=current} operator='|' right=ExpressionBitxor)*;
+ExpressionBitxor returns CxExpression:
+	ExpressionBitand ({ExpressionBinary.left=current} operator='^' right=ExpressionBitand)*;
+ExpressionBitand returns CxExpression:
+	ExpressionEq ({ExpressionBinary.left=current} operator='&' right=ExpressionEq)*;
+ExpressionEq returns CxExpression:
+	ExpressionRelational ({ExpressionBinary.left=current} operator=('==' | '!=') right=ExpressionRelational)*;
+ExpressionRelational returns CxExpression:
+	ExpressionShift ({ExpressionBinary.left=current} operator=('<' | '<=' | '>' | '>=') right=ExpressionShift)*;
+ExpressionShift returns CxExpression:
+	ExpressionAdditive ({ExpressionBinary.left=current} operator=('<<' | '>>') right=ExpressionAdditive)*;
+ExpressionAdditive returns CxExpression:
+	ExpressionMultiplicative ({ExpressionBinary.left=current} operator=('+' | '-') right=ExpressionMultiplicative)*;
+ExpressionMultiplicative returns CxExpression:
+	ExpressionUnary ({ExpressionBinary.left=current} operator=('*' | '/' | '%') right=ExpressionUnary)*;
+
+ExpressionUnary returns CxExpression:
+	{ExpressionUnary} (
+		(operator=('~' | '!' | '-') expression=ExpressionPostfix)
+		| (operator='sizeof' '(' expression=CxExpression ')')
+	)
+	| ExpressionPostfix
+;
+
+ExpressionPostfix returns CxExpression:
+	=> ExpressionCast
+    | ExpressionVariable
+	| Primary
+;
+
+ExpressionCast:
+	'(' type=CxType ')' expression=ExpressionUnary
+;
+
+ExpressionVariable:
+	source=VarRef ('[' indexes += CxExpression ']')*
+		('.' ready = 'ready')?
+		('(' (parameters += CxExpression (',' parameters += CxExpression)*)? ')')?;
+
+Primary returns CxExpression:
+	Literal
+	| '(' CxExpression ')'
+;
+
+Literal returns CxExpression:
+      ExpressionBoolean
+	| ExpressionInteger
+    | ExpressionFloat
+    | ExpressionString
+;
+///////////////////////////////////////////////////////////////////////////////
+// literal expressions
+///////////////////////////////////////////////////////////////////////////////
+
+ExpressionBoolean: value=BOOL;
+
+ExpressionFloat: value=FLOAT;
+
+ExpressionInteger: value=(INTEGER | CHAR);
+
+ExpressionString: value=STRING;
+
+
+
+terminal BOOL returns ecore::EBoolean: 'true' | 'false';
+
+terminal INTEGER returns ecore::EBigInteger: DECIMAL | OCTAL | HEXADECIMAL | BINARY;
+
+terminal CHAR returns ecore::EBigInteger: "'" (ESCAPED_CHAR | (!('\\'|"'"))) "'";
+
+terminal STRING: '"' (ESCAPED_CHAR | !('\\'|'"'))* '"';
+
+
+
+terminal fragment DIGIT_BIN: '0' | '1';
+
+terminal fragment DIGIT_DEC: '0'..'9';
+
+terminal fragment DIGIT_HEX: DIGIT_DEC | 'a'..'f' | 'A'..'F';
+
+terminal fragment DIGIT_OCT: '0'..'7';
+
+terminal fragment DECIMAL: ('1'..'9') ('_'? DIGIT_DEC)*;
+
+terminal fragment OCTAL: '0' ('_'? DIGIT_OCT)*;
+
+terminal fragment HEXADECIMAL: '0' 'x' DIGIT_HEX ('_'? DIGIT_HEX)*;
+
+terminal fragment BINARY: '0' 'b' DIGIT_BIN ('_'? DIGIT_BIN)*;
+
+terminal fragment ESCAPED_CHAR:
+	'\\'
+	(
+		  "'"
+		| '"'
+		| '\\'
+		| 'b'
+		| 'f'
+		| 'n'
+		| 'r'
+		| 't'
+		| (DIGIT_OCT (DIGIT_OCT DIGIT_OCT?)?)
+		| ('x' DIGIT_HEX DIGIT_HEX)
+		| ('u' DIGIT_HEX DIGIT_HEX DIGIT_HEX DIGIT_HEX)
+		| ('U'	DIGIT_HEX DIGIT_HEX DIGIT_HEX DIGIT_HEX
+				DIGIT_HEX DIGIT_HEX DIGIT_HEX DIGIT_HEX)
+	);
+
+terminal FLOAT returns ecore::EBigDecimal: REAL;
+
+terminal fragment REAL:
+	DIGIT_DEC+ '.' DIGIT_DEC* EXPONENT?
+|	'.' DIGIT_DEC+ EXPONENT?
+|	DIGIT_DEC+ EXPONENT;
+
+terminal fragment EXPONENT: ('e'|'E') ('+' | '-')? DIGIT_DEC+;
+
+///////////////////////////////////////////////////////////////////////////////
+// types
+///////////////////////////////////////////////////////////////////////////////
+
+CxType:
+	TypeRef
+	| TypeDecl
+;
+
+terminal TYPE_INT: 'i' ('1'..'9') ('0'..'9')*;
+terminal TYPE_UINT: 'u' ('1'..'9') ('0'..'9')*;
+
+TypeRef: typeDef=[Typedef|QualifiedName];
+
+TypeDecl:
+	((unsigned ?='unsigned' | signed?='signed')
+		(('<' size=ExpressionShift '>')
+		| spec='char'
+		| spec='short'
+		| spec='int' ('<' size=ExpressionShift '>')?
+		| spec='long')?)
+
+	| spec='bool'
+	| spec='float'
+
+	| spec='char'
+	| spec='short'
+	| spec='int' ('<' size=ExpressionShift '>')?
+	| spec='long'
+
+	| spec='uchar'
+	| spec='ushort'
+	| spec='uint' ('<' size=ExpressionShift '>')?
+	| spec='ulong'
+
+	| spec=TYPE_INT
+	| spec=TYPE_UINT
+;
+
+// tokens from Xtext except INT and STRING
+// note that string is exclusively using double quotes "this is a string"
+// because we need to differentiate with characters (integers)
+
+terminal ID: ('a'..'z'|'A'..'Z'|'_') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')*;
+terminal ML_COMMENT: '/*' -> '*/';
+terminal SL_COMMENT: '//' !('\n'|'\r')* ('\r'? '\n')?;
+terminal WS: (' '|'\t'|'\r'|'\n')+;

@@ -1,0 +1,535 @@
+/*******************************************************************************
+ * Copyright (c) 2012-2014 Synflow SAS.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Matthieu Wipliez
+ *    Nicolas Siret
+ *******************************************************************************/
+package com.synflow.test.pass.for_sync;
+
+task Available2 {
+	properties {
+		test: {data: [ 48, 11, 51, null ], o: [ 48, 18, 18, 23 ] }
+	}
+
+	in sync u8 data; out sync u8 o;
+
+	u5 x = 2;
+
+	void loop() {
+		o.write(data.read);
+	
+		while (data.available) {
+			o.write(18);
+		}
+		o.write(23);
+	}
+}
+
+task BasicForLoop {
+	properties {
+		num_states: 2, num_transitions: 3,
+		test: {count: [ 4 ], resulti: [ null, 0, 2, 4, 6 ] }
+	}
+
+	in u3 count;
+	out sync u8 resulti;
+
+	void loop() {
+		u3 n = count.read();
+		for (u3 i = 0; i < 4; i++) {
+			resulti.write(i << 1);
+		}
+	}
+}
+
+task BasicForLoopAndRead {
+	properties {
+		num_states: 4, num_transitions: 5,
+		test: {
+			inp: [ 8 ],
+			resulti: [ null,    0,    1,    2,    3,    4,    5,    6,    7, null, null, null, null, null, null, null, null, null ],
+			resultj: [ null, null, null, null, null, null, null, null, null, null,   8,    7,    6,    5,    4,    3,    2, 1 ]
+		}
+	}
+
+	in u4 inp;
+	out sync u8 resulti, sync resultj;
+
+	void setup() {
+		u4 max = inp.read();
+		for (u4 i = 0; i != max; i++) {
+			resulti.write(i);
+		}
+	
+		for (u4 j = max; j > 0; j--) {
+			resultj.write(j);
+		}
+	}
+}
+
+task BasicForLoopSeries {
+	properties {
+		test: {
+		count: [ 4 ],
+		resulti: [ null,    0,    2,    4,    6, null, null, null, null ],
+		resultj: [ null, null, null, null, null, null,    6,    4,    2 ] }
+	}
+
+	in u3 count; out sync u8 resulti, sync resultj;
+
+	void loop() {
+		u3 n = count.read();
+		for (u3 i = 0; i < n; i++) {
+			resulti.write(i << 1);
+		}
+		
+		for (u3 j = 3; j != 0; j--) {
+			resultj.write(j << 1);
+		}
+	}
+}
+
+task ConditionedBasicForLoop {
+	properties {
+		test: {
+		inp: [ true, null, null, null, null, null, false, null, null, null ],
+		resulti: [ null,    0,    1,    2,    3, null, null, null, null, null  ],
+		resultj: [ null, null, null, null, null, null, null,    3,    2,    1  ] }
+	}
+
+	in sync bool inp;
+	out sync u8 resulti;
+	out sync u8 resultj;
+	
+	u3 i, j;
+
+	void loop() {
+		if (inp.read()) {
+			for (i = 0; i < 4; i++) {
+				resulti.write(i);
+			}
+		}
+	
+		if (!inp.read()) {
+			for (j = 3; j != 0; j--) {
+				resultj.write(j);
+			}
+		}
+	}
+}
+
+task ForAndReadAfter {
+	properties {
+		num_states: 2, num_transitions: 3,
+		test: {
+			data: [    6, 5,    5, 4,    4,    4, 3,    3,    3,    3, 2 ],
+			value: [ null, 6, null, 5, null, null, 4, null, null, null, 3 ],
+			count: [ null, 1, null, 2, null, null, 3, null, null, null, 4 ]
+		}
+	}
+
+	in sync u8 data;
+	out sync u8 value;
+	out sync u15 count;
+
+	u8 d, d_ref = 6; // reference value
+	u15 i = 1;
+
+	void setup() {
+	  d_ref = data.read();
+	}
+
+	void loop() {
+	  for (; d_ref == data.read() && i < 32767; i++) {
+	  }
+	
+	  count.write(i);
+	  value.write(d_ref);
+	  d_ref = data.read();
+	  i = 1;
+	}
+}
+
+task ForLoopEmpty {
+	properties {
+		num_states: 2, num_transitions: 3,
+		test: {inp: [ null, null, null, 16 ], outp: [ 0, null, null, 16, 16 ] }
+	}
+
+	in sync u16 inp;
+	out sync u16 outp;
+
+	u16 i, temp;
+
+	void loop() {
+		outp.write(temp);
+		for (i = 0; i < 2; i++) {
+		}
+		temp = inp.read();
+		outp.write(temp);
+	}
+}
+
+task ForLoopNoInitNoAfter {
+	properties {
+		num_states: 2, num_transitions: 2,
+		test: {resulti: [ 6, 4, 2 ] }
+	}
+
+	out sync u8 resulti;
+
+	u2 i = 3;
+
+	void setup() {
+		for (; i > 0;) {
+			resulti.write(i << 1);
+			i--;
+		}
+		i--;
+	}
+}
+
+task InvokeAndWhileLoop {
+	properties {
+		num_states: 3, num_transitions: 3,
+		test: {
+			amount: [ null,     0,     4,     8,    16,    null,     2,     5,     9,    17, null ],
+			amountIn: [ null,  true,  true,  true,  true,    null,  true,  true,  true,  true, false ],
+			errorIn: [ null, false, false, false, false,    null, false, false, false, false, null ],
+			res: [    3,     0,     4,    8,    16,     null,     2,     5,     9,    17, null ],
+			sendSucceeding: [ null,  null,  null,  null,  null,    null,  null,  null,  null,  null, true ]
+		}
+	}
+
+	sync {
+		in u8 amount;
+		in bool amountIn;
+		in bool errorIn;
+		out u8 res;
+		out bool sendSucceeding;
+	}
+	
+	bool error = false;
+	u8 count;
+	
+	void setup() {
+		startSend();
+		continueSend();
+	}
+
+	void startSend() {
+		res.write(0b0000_0011);
+	}
+
+	void continueSend() {
+		while (amountIn.read() && !error) {
+			res.write(amount.read());
+			error = errorIn.read();
+		}
+		sendSucceeding.write(!error);
+	}
+}
+
+task MultipleTasksAndLoop {
+	properties {
+		test: {
+		DataIn: [ null, null, 0x0000, null, null, 0x0000, null, null, 0xFFFF, null, null, 0xFFFF, null, null, 0x0000, null, null ],
+		DataOut: [ null, null,      0,	null, null,   null, null,    1,   null, null,     1,  null, null, null,   null, null,    1 ] }
+	}
+
+	sync {
+		in u16 DataIn; out u16 DataOut;
+	}
+
+	const u5 REG_CONTROL = 0;
+	u16 count;
+	u16 status;
+
+	void setup() {
+		Task3();
+	
+		while (!status[2]) {
+			Task4();
+		}
+	
+		//while (true) {
+		while (status[2]) {
+			Task4();
+		}
+	}
+
+	void loop() {
+	}
+
+	void Task3() {
+		for (count = 1; count < 2; count++) {
+		}
+		DataOut.write(0);
+	}
+
+	void Task4() {
+		status = DataIn.read();
+	
+		for (count = 1; count < 2; count++) {
+		}
+		DataOut.write(1);
+	}
+
+}
+
+task NestedLoops {
+	properties {
+		num_states: 2, num_transitions: 4,
+		test: {
+			RxEn: [ null, true, true, false, false ],
+			o: [ null, null, null,  null,  null, 0 ]
+		}
+	}
+
+	in bool RxEn;
+	out sync u4 o;
+
+	void loop() {
+		u4 j;
+		for (j = 2; j != 0; j--) {
+			while (RxEn.read()) {
+			}
+		}
+		o.write(j);
+	}
+}
+
+task NestedLoops2 {
+	properties {
+		num_states: 2, num_transitions: 4,
+		test: {o: [
+			null, null, null, null, null, null, null, null,
+			null, null, null, null, null, null, null, null,
+			null, null, null, null, null, 20 ]
+		}
+	}
+
+	out sync u8 o;
+
+	u8 count;
+
+	void loop() {
+		u3 j = 3;
+		for (u3 i = 5; i != 0; i--) {
+			for (; j != 0; j--) {
+				count++;
+			}
+			j = 3;
+			count++;
+		}
+		o.write(count);
+	}
+}
+
+task WhileLoop {
+	properties {
+		num_states: 3, num_transitions: 3,
+		test: {resulti: [ 0, 2, 4, 6 ] }
+	}
+
+	out sync u8 resulti;
+
+	u2 i;
+
+	void setup() {
+		resulti.write(i << 1);
+		i++;
+		while (i != 0) {
+			resulti.write(i << 1);
+			i++;
+		}
+	}
+}
+
+task WhileLoopEmpty {
+	properties {
+		num_states: 2, num_transitions: 3,
+		test: {
+			cond: [ null, true, true, true, true, false ],
+			outp: [ null, null, null, null, null, 1 ]
+		}
+	}
+
+	in sync bool cond;
+	out sync u16 outp;
+
+	void loop() {
+		u16 result = 1;
+		while (cond.read()) {
+		}
+		outp.write(result);
+	}
+}
+
+task WhileLoopIf {
+	properties {
+		num_states: 2, num_transitions: 3,
+		test: {
+			cond: [ null, true, true, true, true, false ],
+			outp: [ null, null, null, null, null, 4 ]
+		}
+	}
+
+	in sync bool cond;
+	out sync u16 outp;
+
+	void loop() {
+		u16 i = 0;
+		while (i < 4) {
+			bool c = cond.read();
+			if (c) {
+				i++;
+			} else {
+				i = 0;
+			}
+		}
+		outp.write(i);
+	}
+}
+
+task WhileLoopIf2 {
+	properties {
+		num_states: 0, num_transitions: 3,
+		test: {
+			bytes: [    1,    2,    3,             4 ],
+			res: [ null, null, null, 0x01_02_03_04 ]
+		}
+	}
+
+	in sync u8 bytes;
+	out sync u32 res;
+
+	u3 count;
+	u32 fourBytes;
+
+	void loop() {
+		while (bytes.available) {
+			if (count == 3) {
+				fourBytes = (fourBytes << 8) & 0xFFFFFFFF | bytes.read;
+				res.write(fourBytes);
+				fourBytes = 0;
+				count = 0;
+			} else {
+				fourBytes = (fourBytes << 8) & 0xFFFFFFFF | bytes.read;
+				count++;
+			}
+		}
+	}
+}
+
+task WhileLoopIf3 {
+	properties {
+		num_states: 2, num_transitions: 4,
+		test: {
+			start: [ true ],
+			res: [ null, 0, null, null, null, 4, null, null, null, 8, null, null, null, 12 ]
+		}
+	}
+
+	in sync bool start;
+	out sync u4 res;
+
+	u5 i;
+
+	void loop() {
+		start.read();
+		while (i < 16) {
+			u3 imod4 = i % 4;
+			if (imod4 == 0) {
+				res.write((u4) i);
+				i++;
+			} else {
+				i++;
+			}
+		}
+	}
+}
+
+task WhileLoopRead {
+	properties {
+		num_states: 2, num_transitions: 3,
+		test: {
+			cond: [ null, true, true, null, true, true, false ],
+			outp: [ null, null, null, null, null, null, 16 ]
+		}
+	}
+
+	in sync bool cond;
+	out sync u16 outp;
+
+	void loop() {
+		u16 result = 1;
+		while (cond.read()) {
+			result <<= 1;
+		}
+		outp.write(result);
+	}
+}
+
+task WhileLoopSeries {
+	properties {
+		num_states: 4, num_transitions: 5,
+		test: {resulti: [ 0, 2, 4, 6, null, 0, 2, 4 ] }
+	}
+
+	out sync u8 resulti;
+	
+	u2 i;
+	
+	void setup() {
+		resulti.write(i << 1);
+		i++;
+		while (i != 0) {
+			resulti.write(i << 1);
+			i++;
+		}
+		
+		while (i < 3) {
+			resulti.write(i << 1);
+			i++;
+		}
+	}
+}
+
+task WhileReg {
+	properties {
+		test: {
+			Incoming: [ true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, false ],
+			Data: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, null ],
+			Outgoing: [ true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true ],
+			DataOut: [ 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ]
+		}
+	}
+
+	in sync bool Incoming;
+	in sync u8 Data;
+	
+	out sync bool Outgoing;
+	out sync u8 DataOut;
+	
+	u3 j;
+	u8 DataBuffer[8];
+
+	void loop() {
+		while (Incoming.read()) {
+			// Store in buffer
+			DataBuffer[j] = Data.read();
+			// Write to out	
+			u8 PrevReg = DataBuffer[(j + 4) & 7];
+			DataOut.write(PrevReg);
+			Outgoing.write(true);
+			j++;
+		}
+	}
+}
+

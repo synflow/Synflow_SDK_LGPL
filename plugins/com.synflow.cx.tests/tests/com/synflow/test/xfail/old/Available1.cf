@@ -1,0 +1,5 @@
+port in bool p;
+
+void main() {
+	bool tmp = p.available && 1 > 0;
+}

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<templates>
+	<template autoinsert="false" context="com.synflow.cx.Cx.PortDecl"
+		deleted="false" description="input port declaration" enabled="true"
+		id="input" name="in">in ${type} ${name};</template>
+	<template autoinsert="false" context="com.synflow.cx.Cx.PortDecl"
+		deleted="false" description="output port declaration" enabled="true"
+		id="output" name="out">out ${type} ${name};</template>
+	<template autoinsert="false" context="com.synflow.cx.Cx.Inst"
+		deleted="false" description="new instance" enabled="true"
+		id="new_inst" name="new_inst">${inst} = new ${inst}${cursor}();</template>
+	<template autoinsert="false" context="com.synflow.cx.Cx.Inst"
+		deleted="false" description="new inner task" enabled="true"
+		id="new_inner" name="new_inner">${inst} = new task {
+	void loop() {
+		print("TODO ${inst}");
+	}
+};</template>
+	<template autoinsert="false" context="com.synflow.cx.Cx.Statement"
+		deleted="false" description="if statement" enabled="true"
+		id="if" name="if">if (${condition}) {
+	
+}</template>
+	<template autoinsert="false" context="com.synflow.cx.Cx.Statement"
+		deleted="false" description="if else statement" enabled="true"
+		id="ifelse" name="ifelse">if (${condition}) {
+	
+} else {
+	
+}</template>
+
+</templates>

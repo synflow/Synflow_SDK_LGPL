@@ -1,0 +1,92 @@
+/*
+ * This file is part of the ngDesign SDK.
+ *
+ * Copyright (c) 2019 Synflow SAS.
+ *
+ * ngDesign is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ngDesign is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ngDesign.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ */
+ package std.lib;
+
+task SynchronizerFF {
+
+	properties {
+		clocks: ["din_clock", "dout_clock"],
+		implementation: {
+			type: "builtin"
+		},
+		domains: {
+			din_clock:  ["din"],
+			dout_clock: ["dout"]
+		}
+	}
+
+	const int stages = 2;
+
+	in bool din; out bool dout;
+
+}
+
+task SynchronizerMux {
+
+	properties {
+		clocks: ["din_clock", "dout_clock"],
+		implementation: {
+			type: "builtin",
+			dependencies: ["std.lib.SynchronizerFF"]
+		},
+		domains: {
+			din_clock:  ["din"],
+			dout_clock: ["dout"]
+		}
+	}
+
+	const int width = 16, stages = 2;
+
+	in unsigned int<width> din (sync); out unsigned int<width> dout;
+
+}
+
+/**
+ * Multiplexes two single data rate signals to generate a Double Data Rate signal.
+ */
+task MuxDDR {
+	properties {
+		reset: null,
+		implementation: {
+			type: "builtin"
+		}
+	}
+
+	const int width;
+	typedef unsigned int<width> data_t;
+	in data_t rising (sync), falling (sync); out data_t dout (sync);
+
+}
+
+/**
+ * Demultiplexes a Double Data Rate signal as two single data rate signals.
+ */
+task DemuxDDR {
+	properties {
+		implementation: {
+			type: "builtin"
+		}
+	}
+
+	const int width;
+	typedef unsigned int<width> data_t;
+	in data_t din (sync); out data_t rising (sync), falling (sync);
+
+}

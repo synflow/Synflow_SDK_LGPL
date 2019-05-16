@@ -1,0 +1,7 @@
+port in u32 x;
+port out u32 y;
+
+void main() {
+	uint z = x.read;
+	y.write(true ? 51 : false);
+}

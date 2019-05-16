@@ -1,0 +1,154 @@
+/*******************************************************************************
+ * Copyright (c) 2012-2014 Synflow SAS.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Matthieu Wipliez
+ *    Nicolas Siret
+ *******************************************************************************/
+package com.synflow.test.pass.torture;
+
+task LoadStore1 {
+	properties {
+		test: {
+			data: [ 0xFFFF,  null, 0xFFFF, 0x1010 ],
+			o: [  false,  null, false,    true ]
+		}
+	}
+
+	in sync u16 data; out sync bool o;
+
+	bool phyDetected;
+
+	void loop() {
+		if (data.read() != 0xFFFF) {
+			phyDetected = true;
+		}
+	
+		o.write(phyDetected);
+	}
+}
+
+task Reserved {
+	properties {
+		test: {
+			inp:  [    0, null, null, null, null, null, null, null, null,
+					   1 ],
+			outp: [ null, null, null, null, null, null, null, null, 1,
+					null, null, null, null, null, null, null, null, 2 ] 
+		}
+	}
+
+	sync { in u4 inp; out u4 outp; }
+
+	u4 __x, y_, x__y, downto, always, wire, auto, volatile;
+
+	void loop() {
+		__x = inp.read();
+		fence;
+		y_ = (u4) (__x + 1);
+		fence;
+		x__y = (u4) (y_ - 1);
+		fence;
+		downto = (u4) (x__y + 1);
+		fence;
+		always = (u4) (downto * 1);
+		fence;
+		wire = f(always);
+		fence;
+		auto = (u4) (wire + 0);
+		fence;
+		volatile = f(auto);
+		fence;
+		print("volatile = ", volatile);
+		outp.write(volatile);
+	}
+	
+	const u4 f(u4 x) {
+		return x;
+	}
+}
+
+task SchedExpr {
+	properties {
+		test: {inp: [     0,     0,     1,    1,    2,    2 ], outp: [ false, false, false, true, false, true ] }
+	}
+
+	in sync u4 inp; out sync bool outp;
+
+	void loop() {
+		if (!(inp.read < 4)) {
+			outp.write(true);
+		} else {
+			outp.write(false);
+		}
+	
+		if (inp.read + 3 < 4) {
+			outp.write(false);
+		} else {
+			outp.write(true);
+		}
+	}
+}
+
+task ShiftRows {
+	properties {
+		test: {din: [ 0x0F0E0D0C_0B0A0908_07060504_03020100 ], dout: [ 0x0B06010C_07020D08_030E0904_0F0A0500 ] }
+	}
+
+	typedef u128 state_t;
+	typedef char byte;
+	const u3 Nb = 4;
+
+	in state_t din; out state_t dout;
+	
+	/**
+	 * This function defines the ShiftRows step.
+	 */
+	void loop() {
+		dout.write(shift(din.read));
+	}
+	
+	const state_t shift(state_t state) {
+		u3 r, c;
+		u8 state_arr[4][4];
+	
+		state_t tmp = state;
+		for (c = 0; c < 4; c++) {
+			for (r = 0; r < 4; r++) {
+				state_arr[r][c] = (u8) tmp;
+				tmp >>= 8;
+			}
+		}
+	
+		state_t result = 0;
+		for (c = 0; c < 4; c++) {
+			for (r = 0; r < 4; r++) {
+				result >>= 8;
+				result |= state_arr[r][(c + r) % Nb] << 120;
+			}
+		}
+	
+		return result;
+	}
+}
+
+task Stupid {
+	properties {
+		test: {din: [ 10, null ], dout: [ 11, 10 ] }
+	}
+
+	in sync u8 din; out u8 dout;
+
+	void loop() {
+		if (5 != 6) {
+			dout.write((u8) (din.read + 1));
+		}
+
+		u8 tmp = 5 == 5 ? 0 : 1;
+		dout.write((u8) (tmp + 10));
+	}
+}

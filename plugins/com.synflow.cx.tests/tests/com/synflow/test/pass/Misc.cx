@@ -1,0 +1,226 @@
+/*******************************************************************************
+ * Copyright (c) 2012-2014 Synflow SAS.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Matthieu Wipliez
+ *    Nicolas Siret
+ *******************************************************************************/
+package com.synflow.test.pass.misc;
+
+bundle BundleDataDependencies {
+  //
+  // clock in MHz
+  //
+  u7 CLK_IN_MHZ = 100;
+  u17 BAUD_RATE = 115200;
+
+  //
+  // clock divisor
+  //
+  u11 DIVISOR = CLK_IN_MHZ * 1000 * 1000 / BAUD_RATE;
+
+  //
+  // half of divisor
+  //
+  u10 DIVISOR_2 = DIVISOR / 2;
+}
+
+task ConstUse {
+	properties {
+		test: {I: [ 0, 1, 2 ], O: [ 134, 131, 133 ] }
+	}
+
+	in sync u8 I; out sync u8 O;
+
+	const u8 MY_CONST = 128;
+	const u8 MY_ROM[3] = { 6, 2, 3 };
+
+	u5 idx;
+
+	void loop() {
+		O.write((u8) (I.read + MY_CONST + MY_ROM[idx]));
+		idx++;
+	}
+}
+
+task CopyingOut {
+	properties {
+		test: {inp: [ 0, 1, 2, 3, 4 ], outp: [ 0, 1, 2, 3, 4 ] }
+	}
+
+	in u8 inp; out u8 outp;
+
+	void loop() {
+		outp.write(inp.read());
+	}
+}
+
+task EmptyTask {
+	properties {
+		num_states: 0, num_transitions: 0,
+		test: {in1: [ ], in2: [ ], outp: [ ] }
+	}
+
+	in u16 in1, in2; out u16 outp;
+}
+
+//
+// should be equivalent to EmptyTask (empty setup and empty loop)
+//
+task EmptyTask2 {
+	properties {
+		num_states: 0, num_transitions: 0,
+		test: {in1: [ ], in2: [ ], outp: [ ] }
+	}
+
+	in u16 in1, in2; out u16 outp;
+
+	void setup() {
+	}
+
+	void loop() {
+	}
+}
+
+task EmptyTask3 {
+	properties {
+		num_states: 2, num_transitions: 1,
+		test: {in1: [ 0 ], in2: [ 255 ], outp: [ 255 ] }
+	}
+
+	in sync u16 in1, sync in2; out sync u16 outp;
+
+	void setup() {
+		outp.write((u16) (in1.read() + in2.read()));
+	}
+	
+	// no loop is equivalent to empty loop
+}
+
+task EmptyTask4 {
+	properties {
+		num_states: 0, num_transitions: 1,
+		test: {in1: [ 0 ], in2: [ 255 ], outp: [ 255 ] }
+	}
+
+	in sync u16 in1, sync in2; out sync u16 outp;
+
+	// empty setup is equivalent to no setup
+	void setup() {
+	}
+
+	void loop() {
+		outp.write((u16) (in1.read() + in2.read()));
+	}
+}
+
+bundle InterModuleDefinitions {
+	bool isB(u16 n) {
+		return n == B;
+	}
+	
+	bool isA(u16 n) {
+		return !isB(n) && n == A;
+	}
+	
+	const u16 A = 1;
+	const u16 B = 2;
+	
+	const u8 CONST_ARRAY[4] = { 4, 8, 12, 16 };
+}
+
+task InterModuleUser {
+	properties {
+		test: {Stim: [ 3 ], Res: [ 17, 2, 42 ] }
+	}
+
+	in sync u8 Stim;
+	out u16 Res;
+	
+	void loop() {
+		u16 x = Stim.read();
+		Res.write((u16) (InterModuleDefinitions.A + InterModuleDefinitions.CONST_ARRAY[3]));
+		Res.write(InterModuleDefinitions.B);
+		Res.write(InterModuleDefinitions.isA(x) ? 1 : (InterModuleDefinitions.isB(x) ? 2 : 42));
+	}
+}
+
+task NumberSeparator {
+	properties {
+		test: { inp: [  0b0000_0000, 0xff_ff, 10_000, 0123, '\755', '\x3F', '\n' ],
+		        outp: [           0,   65535,  10000,   83,    493,     63,   10 ] }
+	}
+
+	in u16 inp; out u16 outp;
+
+	void loop() {
+		outp.write(inp.read());
+	}
+}
+
+task PortDecls {
+	properties {
+		test: {in1: [ 0, 255 ], in2: [ 0, 255 ], in3: [ 0, 255 ], outp: [ 0, 765 ] }
+	}
+
+	in u16 in1, u8 in2, in3;
+	out u16 outp;
+
+	void loop() {
+		outp.write((u16) (in1.read() + in2.read() + in3.read));
+	}
+}
+
+task PortDeclsBig {
+	properties {
+		test: {in1: [ 0, 255 ], in2: [ 0, 255 ], in3: [ 0, 255 ], outp: [ 0, 765 ] }
+	}
+
+	in u128 in1, u8 in2, in3;
+	out u256 outp;
+
+	void loop() {
+		outp.write(in1.read() + in2.read() + in3.read);
+	}
+}
+
+task PragmaOnce {
+	properties {
+		test: {inp: [ ], outp: [ 42 ] }
+	}
+
+	in u16 inp; out u16 outp;
+	
+	u16 dummy;
+	
+	void setup() {
+		if (dummy == 1) {
+			outp.write(53);
+		} else {
+			outp.write(42);
+		}
+	}
+}
+
+task TernaryConditionalAndRead {
+	properties {
+		test: {a: [ 0x00, 0xCD, 0xDC, 0xCC, 0xFF, 0xCD ], o: [ 7, 0, 7, 7, 7, 0 ] }
+	}
+
+	in u16 a; out u4 o;
+
+	u4 result;
+
+	void loop() {
+		test();
+		o.write(result);
+	}
+
+	void test() {
+		result = (a.read() == 0xCD ? 0 : 7);
+	}
+}

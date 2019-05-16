@@ -1,0 +1,77 @@
+/*
+ * This file is part of the ngDesign SDK.
+ *
+ * Copyright (c) 2019 Synflow SAS.
+ *
+ * ngDesign is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ngDesign is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ngDesign.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ */
+ package std.mem;
+
+task SinglePortRAM {
+
+	properties {
+		reset: null,
+		implementation: {type: "builtin"}
+	}
+
+	const int size, width, depth = sizeof(size - 1);
+	const bool writeShiftMode = false, addOutputRegister = false;
+
+	uint<width> contents[size];
+
+	in uint<depth> address, sync uint<width> data; out uint<width> q;
+
+}
+
+task DualPortRAM {
+
+	properties {
+		reset: null,
+		clocks: ["clock_a", "clock_b"],
+		implementation: {type: "builtin"},
+		domains: {
+			clock_a: ["address_a", "data_a", "q_a"],
+			clock_b: ["address_b", "data_b", "q_b"]
+		}
+	}
+
+	const int size, width, depth = sizeof(size - 1);
+
+	uint<width> contents[size];
+
+	in uint<depth> address_a, sync uint<width> data_a; out uint<width> q_a;
+	in uint<depth> address_b, sync uint<width> data_b; out uint<width> q_b;
+
+}
+
+task PseudoDualPortRAM {
+
+	properties {
+		reset: null,
+		clocks: ["rd_clock", "wr_clock"],
+		implementation: {type: "builtin"},
+		domains: {
+			rd_clock: ["rd_address", "q"],
+			wr_clock: ["wr_address", "data"]
+		}
+	}
+
+	const int size, width, depth = sizeof(size - 1);
+
+	uint<width> contents[size];
+
+	in uint<depth> rd_address, wr_address, sync uint<width> data; out uint<width> q;
+
+}

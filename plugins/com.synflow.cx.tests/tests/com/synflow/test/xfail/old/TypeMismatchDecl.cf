@@ -1,0 +1,8 @@
+port in u32 x;
+port out u32 y;
+
+u9 tab[50];
+
+void main() {
+	u5 v, w = 1, x = tab;
+}

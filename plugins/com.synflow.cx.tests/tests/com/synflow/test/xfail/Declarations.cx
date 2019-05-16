@@ -1,0 +1,61 @@
+package declarations;
+
+bundle ConstantWithNoInitialValue {
+  properties {
+    issue: "errVariableDeclaration"
+  }
+
+  const u4 a;
+
+}
+
+bundle InitialValueOfScalarTooLarge {
+  properties {
+    issue: "errTypeMismatch"
+  }
+
+  u2 w = 50;
+
+}
+
+bundle InitialValueOfArrayTooLarge {
+  properties {
+    issue: "errTypeMismatch"
+  }
+
+  u5 w[2] = { 1, 2, 1, 2, 1 };
+
+}
+
+task ConstantAssigned {
+  properties {
+    issue: "errCannotAssignConstant"
+  }
+
+  in u5 toto;
+
+  const u4 XXX = 3;
+
+  void loop() {
+  	XXX = toto.read;
+  }
+
+}
+
+task ConstantIncremented {
+  properties {
+    issue: "errCannotAssignConstant"
+  }
+
+  in u5 toto; out u5 tata;
+
+  int f(int x) {
+    x++;
+    return x;
+  }
+
+  void loop() {
+    tata.write((u5) f(toto.read));
+  }
+
+}

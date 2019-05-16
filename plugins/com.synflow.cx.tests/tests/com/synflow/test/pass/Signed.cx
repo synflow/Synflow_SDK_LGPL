@@ -1,0 +1,261 @@
+/*******************************************************************************
+ * Copyright (c) 2012-2014 Synflow SAS.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Matthieu Wipliez
+ *    Nicolas Siret
+ *******************************************************************************/
+package com.synflow.test.pass.signed_tests;
+
+task Add {
+	properties {
+		test: {
+			in1: [ 0, -32768, 112, 32767, -4095 ],
+			in2: [ 255, 1, 112, 7, -4095 ],
+			outp: [ 255, -32767, 224, -32762, -8190 ]
+		}
+	}
+
+	in i16 in1, in2; out i16 outp;
+	
+	void loop() {
+		outp.write((i16) (in1.read() + in2.read()));
+	}
+}
+
+task Cast1 {
+	properties {
+		test: {
+			in1: [    40, 164 ],
+			in2: [   206, 100 ],
+			outp: [ -2000,  -4 ]
+		}
+	}
+
+	// unsigned 16-bit to signed 8-bit
+	in u16 in1, in2; out i16 outp;
+	
+	void loop() {
+		outp.write((i8) in1.read * (i8) in2.read);
+		if ((i8) in1.read < (u8) in2.read) {
+			// signed with unsigned comparison
+			outp.write(-4);
+		} else {
+			outp.write(48);
+		}
+	}
+}
+
+task Compare1 {
+	properties {
+		test: {
+			count: [ 0,  0,    0, 127, 127 ],
+			clip: [ 0, -1, -128,   0, -1 ],
+			result: [ false, true, true, true, true ]
+		}
+	}
+
+	in i8 count, clip; out bool result;
+	
+	void loop() {
+		result.write(count.read() > clip.read());
+	}
+}
+
+task Compare2 {
+	properties {
+		test: {count: [ 0, -1, -128, -128 ], clip: [ 0,  0,   -1,  127 ], result: [ false, true, true, true ] }
+	}
+
+	in i8 count, clip; out bool result;
+
+	void loop() {
+		result.write(count.read() < clip.read());
+	}
+}
+
+task Compare3 {
+	properties {
+		test: {
+			count:  [   -1,     0,  -128, -127,    53,  127 ],
+			result: [ true, false, false, true, false, true ]
+		}
+	}
+
+	in i8 count; out bool result;
+
+	void loop() {
+		i8 n = count.read();
+		result.write((n < 0 && n > -128) || (n > 53));
+	}
+}
+
+task ConstSignedArray {
+	properties {
+		test: {din: [ 2, 1, 0 ], dout: [ -3, 4, -16 ] }
+	}
+
+	sync { in u2 din; out i16 dout; }
+
+	const i16 SIGNED_LUT[3] = { -16, 4, -3 };
+
+	void loop() {
+		dout.write(SIGNED_LUT[din.read]);
+	}
+}
+
+task CounterIncrement {
+	properties {
+		test: {count: [ 0, 1, 2, 3, -4, -3, -2, -1, 0] }
+	}
+
+	out sync i3 count;
+
+	i3 cnt;
+
+	void loop() {
+		count.write(cnt);
+		cnt++;
+	}
+}
+
+task Mask {
+	properties {
+		test: {inp: [ -1, 32767, 112, -94, 3756 ], outp: [ 511, 511, 112, 418, 172 ] }
+	}
+
+	in i16 inp; out i12 outp;
+
+	void loop() {
+		outp.write(inp.read() & 511);
+	}
+}
+
+task Mult {
+	properties {
+		test: {in1: [ -2, -16384 ], in2: [ -4, 0x2000 ], outp: [ 8, -134217728 ] }
+	}
+
+	in i24 in1, in2; out i48 outp;
+
+	void loop() {
+		outp.write(in1.read * in2.read);
+	}
+}
+
+task OverflowSigned {
+	properties {
+		test: {
+		stim: [ 0,  0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0 ],
+		count: [ -1, 0, 1, 2, 3, 4, 5, 6, 7, -8, -7, -6, -5, -4, -3 ] }
+	}
+
+	in u4 stim; out sync i4 count;
+
+	u4 dummy;
+	i4 icount = -2;
+
+	void loop() {
+		dummy = stim.read();
+		icount++;
+		count.write(icount);
+	}
+}
+
+task OverflowSigned2 {
+	properties {
+		test: {stim: [ 0 ], count: [ 1 ] }
+	}
+
+	in i3 stim; out i3 count;
+
+	void loop() {
+		i3 dummy = stim.read();
+		dummy = (i3) -15;
+		count.write(dummy);
+	}
+}
+
+task ShiftRight {
+	properties {
+		test: {in1: [ 0, 49, 127, -128, -256, -49 ], outp: [ 0, 12,  15,   -8,  -32, -13 ] }
+	}
+
+	in sync i9 in1; out sync i6 outp;
+
+	void loop() {
+		outp.write((i6) (in1.read() >> 2));
+		outp.write((i6) (in1.read() >> 2));
+		outp.write((i6) (in1.read() >> 3));
+		outp.write(in1.read() >> 4);
+		outp.write((i6) (in1.read() >> 3));
+		outp.write((i6) (in1.read() >> 2));
+	}
+}
+
+task SignConvert {
+	properties {
+		test: {res: [ 4, 4, 4, 4 ] }
+	}
+
+	out u48 res;
+
+	void setup() {
+		u3 un1 = 0b100; // no sign extension (source unsigned)
+		res.write(un1); // expect 4
+		i8 sn1 = un1;   // no sign extension (source unsigned)
+		res.write(sn1); // expect 4
+
+		un1 = (u3) -4;  // convert -4 to 4
+		sn1 = un1;      // still no sign extension
+		res.write(sn1); // expect 4
+	
+		sn1 = -4;
+		un1 = (u3) sn1;
+		sn1 = un1;
+		un1 = -4;
+		res.write(sn1);
+	
+		u32 un2 = 0x8000_0000;
+		i80 sn2 = un2;
+		assert(sn2 == 0x0000_0000_0000_8000_0000);
+	
+		u64 un3 = 0x8000_0000_0000_0000;
+		i80 sn3 = un3;
+		assert(sn3 == 0x0000_8000_0000_0000_0000);
+	
+		u80 un4 = 0x8000_0000_0000_0000_0000;
+		i128 sn4 = un4;
+		assert(sn4 == 0x0000_0000_0000_8000_0000_0000_0000_0000);
+	}
+}
+
+task SignExtend {
+	properties {
+		test: {in1: [ -5506147614635 ], outp: [ -5506147614635 ] }
+	}
+
+	in i48 in1;
+	out i80 outp;
+
+	void loop() {
+		outp.write(in1.read); // check sign extension
+	}
+}
+
+task Sub {
+	properties {
+		test: {in1: [ 0, 0, 112, 32767, 4 ], in2: [ 255, 1, 112, 255, 8 ], outp: [ -255, -1, 0, 32512, -4 ] }
+	}
+
+	in i16 in1, in2; out i16 outp;
+
+	void loop() {
+		outp.write((i16) (in1.read() - in2.read()));
+	}
+}
+

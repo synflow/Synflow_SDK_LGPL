@@ -1,0 +1,126 @@
+/*******************************************************************************
+ * Copyright (c) 2012-2014 Synflow SAS.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Matthieu Wipliez
+ *    Nicolas Siret
+ *******************************************************************************/
+package com.synflow.test.pass.comb;
+
+task BarrelShifter {
+	properties {
+		test: {inn: [ 1, 1, 1, 2,   2, 0x2000_0000 ], inp: [ 0, 1, 2, 3,   8, 1 ], outp: [ 1, 2, 4, 16,  2, 0x4000_0000 ] }
+	}
+
+	in sync u32 inn, sync u8 inp; out sync u32 outp;
+
+	void loop() {
+		outp.write(barrelShifter(inn.read(), inp.read()));
+	}
+
+	const u32 barrelShifter(u32 a, u8 b) {
+		u32 toto[8];
+		toto[0] = a;
+
+		for (u8 i = 1; i < 8; i++) {
+			toto[i] = (u32) (toto[i - 1] << 1);
+		}
+		return toto[b];
+	}
+}
+
+task Combinational1 {
+	properties {
+		num_states: 0, num_transitions: 1,
+		type: "combinational",
+		test: {
+			op1: [ 1024,  0x7FFF_FFFF ], op2: [ 1,     1 ], doAdd: [ false, true ],
+			res: [ 1023,  0x8000_0000 ],
+			o: [ false, true ],
+			c: [ false, false ]
+		}
+	}
+
+	in u32 op1, op2, bool doAdd;
+	out u32 res, bool o, c;
+
+	void loop() {
+		u32 oper1 = op1.read;
+		u32 oper2 = op2.read;
+	
+		u32 result = 0;
+		bool test = doAdd.read;
+		if (test) {
+			result = (u32) (oper1 + oper2);
+		} else {
+			result = (u32) (oper1 - oper2);
+		}
+	
+		o.write(oper1[31] && oper2[31] && !result[31] || // both operands have MSB, but not result
+					!oper1[31] && !oper2[31] && result[31]); // both operands have no MSB, but result has
+		c.write(oper1[31] && oper2[31] || // two operands have MSB set
+					!result[31] && (oper1[31] || oper2[31])); // or one of them has, but not the result
+		res.write(result);
+	}
+}
+
+task Combinational2 {
+	properties {
+		num_states: 0, num_transitions: 3,
+		type: "combinational",
+		test: {
+			s: [ true, true, false ],
+			din1: [ 1, null, 3 ],
+			din2: [ 4, 5, 6 ],
+			dout: [ 1, null, 6 ]
+		}
+	}
+
+	in bool s, sync u8 din1, sync u8 din2; out sync u8 dout;
+
+	void loop() {
+		if (s.read) {
+			dout.write(din1.read);
+		} else if (!s.read) {
+			dout.write(din2.read);
+		}
+	}
+}
+
+task ComputationForLoop {
+	properties {
+		num_states: 0, num_transitions: 1,
+		test: {p: [ true ], resulti: [ 16 ], resultj: [ 64 ] }
+	}
+
+	in sync bool p;
+	out sync u8 resulti;
+	out sync u8 resultj;
+
+	void loop() {
+		p.read();
+		u8 i = compute_i();
+		resulti.write(i);
+		compute_j(i);
+	}
+	
+	const u8 compute_i() {
+		u8 res = 1;
+		for (u3 i = 0; i < 4; i++) {
+			res <<= 1;
+		}
+		return res;
+	}
+	
+	void compute_j(u8 param) {
+		u8 res = 0;
+		for (u4 i = 8; i != 0; i--) {
+			res += param >> 1;
+		}
+		resultj.write(res);
+	}
+}

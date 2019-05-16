@@ -1,0 +1,68 @@
+/*******************************************************************************
+ * Copyright (c) 2012-2014 Synflow SAS.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Matthieu Wipliez
+ *    Nicolas Siret
+ *******************************************************************************/
+package com.synflow.test.app.syncs;
+
+import std.lib.SynchronizerFF, std.lib.SynchronizerMux;
+
+network TestSynchronizerFF_2stages {
+
+	properties {
+		clocks: ["clock_in", "clock_out"],
+		test: {
+			din:  [true,  true, false, false, true,  false, false, false],
+			dout: [false, true, true,  false, false, true,  false, false]
+		}
+	}
+
+	in bool din; out bool dout;
+
+	sync_ff = new SynchronizerFF(); // uses same clocks as parent (inherited)
+	sync_ff.reads(din);
+	sync_ff.writes(dout);
+
+}
+
+network TestSynchronizerFF_3stages {
+
+	properties {
+		clocks: ["clock_in", "clock_out"],
+		test: {
+			din:  [true,  true,  false, false, true,  false, false, false, false],
+			dout: [false, false, true,  true,  false, false,  true, false, false]
+		}
+	}
+
+	in bool din; out bool dout;
+
+	sync_ff = new SynchronizerFF({stages: 3}); // uses same clocks as parent (inherited)
+	sync_ff.reads(din);
+	sync_ff.writes(dout);
+
+}
+
+network TestSynchronizerMux {
+
+	properties {
+		clocks: ["clock_in", "clock_out"],
+		test: {
+			din:  [   53, null, null, 727, null, null,  7, null, null, null, null, null, 433, null, null, 2963, null, null,  661, null, null, null, null ],
+			dout: [ null,   0,   53,   53, 53,  727,  727,  727,    7,    7,   7,    7,    7,    7,  433,  433,  433, 2963, 2963, 2963,  661,  661,  661 ]
+		}
+	}
+
+	in sync u32 din; out u32 dout;
+
+	sync_mux = new SynchronizerMux({width: 32, stages: 2, clocks: {din_clock: "clock_in", dout_clock: "clock_out"}});
+	sync_mux.reads(din);
+	sync_mux.writes(dout);
+
+}

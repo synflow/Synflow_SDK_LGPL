@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="com.synflow.core.injection">
+      <module
+            class="com.synflow.ngDesign.NgDesignModule">
+      </module>
+      <generator
+            name="Verilog">
+      </generator>
+      <generator
+            name="VHDL">
+      </generator>
+   </extension>
+   <extension
+         point="org.eclipse.debug.core.launchConfigurationTypes">
+      <launchConfigurationType
+            delegate="com.synflow.ngDesign.internal.NgDesignProInjectableExtensionFactory:com.synflow.ngDesign.internal.debug.LaunchDelegateSimulation"
+            id="com.synflow.ngDesign.launchConfigurationSimulation"
+            modes="run,debug"
+            name="Simulation">
+      </launchConfigurationType>
+      <launchConfigurationType
+            delegate="com.synflow.ngDesign.internal.synthesis.LaunchDelegateSynthesis"
+            id="com.synflow.ngDesign.launchConfigurationSynthesis"
+            modes="run"
+            name="Synthesis">
+      </launchConfigurationType>
+   </extension>
+   <extension
+         point="org.eclipse.core.runtime.preferences">
+	  <initializer
+         class="com.synflow.ngDesign.preferences.PreferenceInitializer">
+      </initializer>
+   </extension>
+</plugin>

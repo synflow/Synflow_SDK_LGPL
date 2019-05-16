@@ -1,0 +1,10 @@
+port in sync u5 x;
+
+void main() {
+	// cannot call a procedure in a statement
+	f(18);
+}
+
+int f(int a) {
+	return a + 1;
+}

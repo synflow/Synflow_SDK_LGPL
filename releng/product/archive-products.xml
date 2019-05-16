@@ -1,0 +1,76 @@
+<project name="Archive products" default="main" basedir=".">
+  <description>
+    Ant build file to archive products
+  </description>
+
+  <!-- main task -->
+  <target name="main" description="Archive products">
+    <echo>running in ${basedir}</echo>
+
+    <antcall target="archive-7z">
+      <param name="os" value="win32"/>
+      <param name="ws" value="win32"/>
+      <param name="arch" value="x86_64"/>
+    </antcall>
+
+    <antcall target="archive-mac">
+      <param name="os" value="macosx"/>
+      <param name="ws" value="cocoa"/>
+      <param name="arch" value="x86_64"/>
+    </antcall>
+
+    <antcall target="archive-tar-gz">
+      <param name="os" value="linux"/>
+      <param name="ws" value="gtk"/>
+      <param name="arch" value="x86_64"/>
+    </antcall>
+
+    <antcall target="archive-7z">
+      <param name="os" value="win32"/>
+      <param name="ws" value="win32"/>
+      <param name="arch" value="x86"/>
+    </antcall>
+
+    <antcall target="archive-tar-gz">
+      <param name="os" value="linux"/>
+      <param name="ws" value="gtk"/>
+      <param name="arch" value="x86"/>
+    </antcall>
+  </target>
+
+  <target name="archive-7z">
+    <echo>7-zipping ngDesign/${os}/${ws}/${arch}</echo>
+    <exec executable="7zr" dir="target/products/ngDesign/${os}/${ws}/${arch}" os="Linux">
+      <arg value="a"/>
+      <arg value="-bd"/>
+      <arg value="-r"/>
+      <arg value="${basedir}/target/products/ngDesign-${os}.${ws}.${arch}.7z"/>
+      <arg value="ngDesign"/>
+    </exec>
+  </target>
+
+  <target name="archive-mac">
+    <echo>tar/gzipping ngDesign/${os}/${ws}/${arch}</echo>
+    <!-- use tar because Ant's tar task is brain-damaged when it comes to permissions. -->
+    <exec executable="tar" os="Linux">
+      <arg value="-czf"/>
+      <arg value="target/products/ngDesign-${os}.${ws}.${arch}.tar.gz"/>
+      <arg value="-C"/>
+      <arg value="target/products/ngDesign/${os}/${ws}/${arch}"/>
+      <arg value="ngDesign.app"/>
+    </exec>
+  </target>
+
+  <target name="archive-tar-gz">
+    <echo>tar/gzipping ngDesign/${os}/${ws}/${arch}</echo>
+    <!-- use tar because Ant's tar task is brain-damaged when it comes to permissions. -->
+    <exec executable="tar" os="Linux">
+      <arg value="-czf"/>
+      <arg value="target/products/ngDesign-${os}.${ws}.${arch}.tar.gz"/>
+      <arg value="-C"/>
+      <arg value="target/products/ngDesign/${os}/${ws}/${arch}"/>
+      <arg value="ngDesign"/>
+    </exec>
+  </target>
+
+</project>

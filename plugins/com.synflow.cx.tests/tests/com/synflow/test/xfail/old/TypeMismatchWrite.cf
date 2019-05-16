@@ -1,0 +1,6 @@
+port out bool flag, u8 outp;
+
+void main() {
+	flag.write(51);
+	outp.write(false);
+}

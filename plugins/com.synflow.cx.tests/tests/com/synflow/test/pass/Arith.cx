@@ -1,0 +1,294 @@
+/*******************************************************************************
+ * Copyright (c) 2012-2014 Synflow SAS.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Matthieu Wipliez
+ *    Nicolas Siret
+ *******************************************************************************/
+package com.synflow.test.pass.arith;
+
+task Add {
+	properties {
+		test: {in1: [ 0, 65535, 112, 65535, 4095 ], in2: [ 255, 1, 112, 255, 4095 ], outp: [ 255, 0, 224, 254, 8190 ] }
+	}
+
+	in u16 in1, in2; out u16 outp;
+
+	void loop() {
+		outp.write((in1.read() + in2.read()) & 0xFFFF);
+	}
+}
+
+task AddCarry {
+	properties {
+		test: {
+			a: [   0, 65535,   112, 65535 ],
+			b: [ 255,     1,   112,   255 ],
+			o: [ 127, 32768,   112, 32895 ]
+		}
+	}
+
+	in u16 a, b; out u16 o;
+
+	void loop() {
+		u17 res = (a.read + b.read) * 2 >> 2;
+		o.write((u16) res);
+	}
+}
+
+task AddMinusOne {
+	properties {
+		test: {
+			in1:  [     0,    0,    112, 65535,     4 ],
+			in2:  [   255,    1,    112,   255,     8 ],
+			outp: [ 65280, 65534, 65535, 65279, 65531 ]
+		}
+	}
+
+	in u16 in1, in2; out u16 outp;
+
+	void loop() {
+		u16 a = in1.read();
+		u16 b = in2.read();
+		outp.write((u16) (a + (-b) + -1));
+	}
+}
+
+task Arith_128 {
+	properties {
+		test: {
+			w0p: [ 0x8b7e1516 ], w1p: [ 0x88aed2a6 ], w2p: [ 0xabf71588 ], w3p: [ 0x89cf4f3c ],
+			w: [ 0x89cf4f3c_abf71588_88aed2a6_8b7e1516 ]
+		}
+	}
+
+	in u32 w0p, w1p, w2p, w3p;
+	out u128 w;
+
+	u128 temp;
+
+	void loop() {
+		u32 w0 = w0p.read, w1 = w1p.read, w2 = w2p.read, w3 = w3p.read;
+
+		temp = w0 << 96 | temp >> 32;
+		temp = w1 << 96 | temp >> 32;
+		temp = w2 << 96 | temp >> 32;
+		temp = w3 << 96 | temp >> 32;
+
+		u128 t1 = (w3 << 96) | (w2 << 64) | (w1 << 32) | w0;
+		assert(t1 == temp);
+		w.write(t1);
+	}
+}
+
+task Arith_32 {
+	properties {
+		test: {
+			in1: [ 0xFFFF_FFFF,        null, 0,        null ],
+			in2: [           1,        null, 1,        null ],
+			outp: [           0, 0xFFFF_FFFE, 1, 0xFFFF_FFFF ]
+		}
+	}
+
+	in sync u32 in1, sync in2; out sync u32 outp;
+	
+	u32 a, b;
+
+	void loop() {
+	  a = in1.read;
+	  b = in2.read;
+	  outp.write((u32) (a + b));
+	  outp.write((u32) (a - b));
+	}
+}
+
+task Arith_64_Clipped {
+	properties {
+		test: {
+		in1: [ 0xFFFF_FFFF_FFFF_FFFF,        null, 0,        null ],
+		in2: [                     1,        null, 1,        null ],
+		outp: [                     0, 0xFFFF_FFFE, 1, 0xFFFF_FFFF ] }
+	}
+
+	in sync u64 in1, sync u32 in2; out sync u32 outp;
+	
+	u64 a;
+	u32 b;
+
+	void loop() {
+	  a = in1.read;
+	  b = in2.read;
+	  outp.write((u32) (a + b));
+	  outp.write((u32) (a - b));
+	}
+}
+
+task Arith_64 {
+	properties {
+		test: {
+		in1: [ 0xFFFF_FFFF_FFFF_FFFF,                  null, 0,                  null ],
+		in2: [                     1,                  null, 1,                  null ],
+		outp: [                     0, 0xFFFF_FFFF_FFFF_FFFE, 1, 0xFFFF_FFFF_FFFF_FFFF ] }
+	}
+
+	sync {
+	  in u64 in1, in2; out u64 outp;
+	}
+
+	u64 a, b;
+
+	void loop() {
+	  a = in1.read;
+	  b = in2.read;
+	  outp.write((u64) (a + b));
+	  outp.write((u64) (a - b));
+	}
+}
+
+task DivTwo {
+	properties {
+		test: {inp: [ 1, 2, 4, 8, 16 ], outp: [ 0, 1, 2, 4, 8 ] }
+	}
+
+	in u8 inp; out u8 outp;
+
+	void loop() {
+		outp.write(inp.read() / 2);
+	}
+}
+
+task Modulo {
+	properties {
+		test: {inp: [ 1, 2, 4, 8, 16, 31 ], outp: [ 1, 2, 4, 8, 0, 15 ] }
+	}
+
+	in u8 inp; out u8 outp;
+
+	void loop() {
+		outp.write(inp.read() % 16);
+	}
+}
+
+// stress test for Verilog dumb type system
+task MulAndShift {
+	properties {
+		test: {a: [ 7, 6 ], b: [ 7, 6 ], o: [ 3, 2 ] }
+	}
+
+	in u3 a, b; out u2 o;
+
+	void loop() {
+		u2 high = (u2) ((1 + 8 * a * b - 1) >> 7);
+		o.write(high);
+	}
+}
+
+task Mult {
+	properties {
+		test: {in1: [ 0, 65535, 112, 255, 4 ], in2: [ 255, 1, 112, 255, 4 ], outp: [ 0, 65535, 12544, 65025, 16 ] }
+	}
+
+	in u16 in1, in2; out u16 outp;
+
+	void loop() {
+		outp.write((in1.read() * in2.read()) & 65535);
+	}
+}
+
+task Negative {
+	properties {
+		test: {din: [ 0, 0x1_FFFF_FFFF ], done: [ null, true ] }
+	}
+
+	sync { in u33 din; out bool done; }
+
+	void loop() {
+		assert(din.read() == 0);
+		assert(din.read() == -1);
+		done.write(true);
+	}
+}
+
+task Operators {
+	properties {
+		test: {in1: [ 0, 32768, 112, 511, 8176 ], in2: [ 64, 1, 112, 7, 8 ], outp: [ 14, 29, 226, 1050, 4092 ] }
+	}
+
+	in u16 in1, in2; out u16 outp;
+
+	void loop() {
+		u16 inp;
+		inp = in1.read();
+		inp += 15;
+		inp = (u16) (inp << 3);
+		inp -= in2.read();
+		inp = inp >> 2;
+		inp = inp & 4095;
+		outp.write(inp);
+	}
+}
+
+task ShiftLeft {
+	properties {
+		test: {in1: [ 0, 1, 2, 3 ], outp: [ 0, 16, 32, 48 ] }
+	}
+
+	in u3 in1; out u16 outp;
+
+	void loop() {
+		outp.write(in1.read() << 4);
+	}
+}
+
+task ShiftRight {
+	// the 32768 and 40960 stimulus check that unsigned shift = no sign extend
+	properties {
+		test: {in1: [ 0, 16, 32, 48, 32768, 40960 ], outp: [ 0, 1, 2, 3, 4, 5 ] }
+	}
+
+	in sync u16 in1; out sync u3 outp;
+
+	void loop() {
+		outp.write((u3) (in1.read() >> 4));
+		outp.write((u3) (in1.read() >> 4));
+		outp.write((u3) (in1.read() >> 4));
+		outp.write((u3) (in1.read() >> 4));
+		outp.write(in1.read() >> 13);
+		outp.write(in1.read() >> 13);
+	}
+}
+
+task Sub {
+	properties {
+		test: {in1: [ 0, 0, 112, 65535, 4 ], in2: [ 255, 1, 112, 255, 8 ], outp: [ 65281, 65535, 0, 65280, 65532 ] }
+	}
+
+	in u16 in1, in2; out u16 outp;
+
+	void loop() {
+		outp.write((u16) (in1.read() - in2.read()));
+	}
+}
+
+task UnaryMinus {
+	properties {
+		test: {
+			in1:  [ 0, -1,  2147483647, -2147483648 ],
+			out1: [ 0,  1, -2147483647,  2147483648 ]
+		}
+	}
+
+	in i32 in1; out i33 out1;
+
+	void loop() {
+		out1.write(-in1.read);
+
+		u4 x = 15;
+		i6 y = -x;
+		assert(y == -15);
+	}
+}

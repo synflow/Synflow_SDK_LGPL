@@ -1,0 +1,6 @@
+port out u8 outp;
+
+void main() {
+	fence();
+	outp.write(5);
+}

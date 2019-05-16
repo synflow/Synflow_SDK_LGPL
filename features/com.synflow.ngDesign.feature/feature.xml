@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="com.synflow.ngDesign.feature"
+      label="%featureName"
+      version="0.92.0.qualifier"
+      provider-name="%providerName"
+      plugin="com.synflow.ngDesign.ide">
+
+   <description>
+      %description
+   </description>
+
+   <copyright>
+      Copyright (c) 2012-2019, Synflow SAS
+      All rights reserved.
+   </copyright>
+
+   <license url="https://gitlab.com/synflow/ngdesign_gplv3/blob/master/LICENSE">
+      The license agreement GNU GPL v3 is available at https://gitlab.com/synflow/ngdesign_gplv3/blob/master/LICENSE
+   </license>
+
+   <url>
+      <update label="Synflow Update Site" url="http://updates.synflow.com"/>
+   </url>
+
+   <includes
+         id="org.eclipse.platform"
+         version="0.0.0"/>
+
+   <requires>
+      <import plugin="org.eclipse.ui"/>
+      <import plugin="org.eclipse.ui.intro"/>
+      <import plugin="org.eclipse.egit.ui"/>
+      <import plugin="com.synflow.ngDesign.ui" version="0.90.1" match="greaterOrEqual"/>
+      <import feature="com.synflow.ngDesign.plugins" version="0.92.0" match="greaterOrEqual"/>
+      <import feature="org.eclipse.platform" version="4.4.0" match="greaterOrEqual"/>
+      <import feature="org.eclipse.jgit" version="3.3.0" match="greaterOrEqual"/>
+      <import feature="org.eclipse.egit" version="3.3.0" match="greaterOrEqual"/>
+   </requires>
+
+   <plugin
+         id="com.synflow.ngDesign.ide"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+</feature>

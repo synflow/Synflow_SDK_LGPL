@@ -1,0 +1,10 @@
+port in sync u5 x;
+
+void main() {
+	// cannot call a procedure in a statement
+	int x = f();
+}
+
+void f() {
+	x.read();
+}

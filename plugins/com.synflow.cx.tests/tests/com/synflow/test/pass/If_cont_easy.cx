@@ -1,0 +1,434 @@
+/*******************************************************************************
+ * Copyright (c) 2012-2014 Synflow SAS.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Matthieu Wipliez
+ *    Nicolas Siret
+ *******************************************************************************/
+package com.synflow.test.pass.if_cont_easy;
+
+task Available1 {
+	properties {
+		test: {data: [ 48, 11, 51, null ], o: [ 48, 18, 51, 23 ] }
+	}
+
+	in sync u8 data; out sync u8 o;
+
+	void loop() {
+		o.write(data.read);
+		fence;
+		if (data.available) {
+			o.write(18);
+		} else {
+			o.write(23);
+		}
+	}
+}
+
+task ComputationalIf {
+	properties {
+		num_states: 0, num_transitions: 1,
+		test: {i: [ 5, 6 ], resultj: [ 5, 7 ] }
+	}
+
+	in u8 i;
+	out u8 resultj;
+
+	void loop() {
+		u8 x = i.read();
+		
+		// if no-else
+		if (x > 5) {
+			x++;
+		}
+		
+		// no-op
+		if (x < 6) {
+			x *= 1;
+		} else {
+			x += 0;
+		}
+		
+		resultj.write(x);
+	}
+}
+
+task ConditionedDualPortsWrite {
+	properties {
+		num_states: 0, num_transitions: 2,
+		test: {
+			in1: [ true, false, true, false, false ],
+			result1: [ true,  true, true,  true, true ],
+			result2: [ false, false, false, false, false ]
+		}
+	}
+
+	in bool in1; out bool result1, result2;
+
+	u16 count;
+
+	void loop() {
+		if (in1.read) {
+			result1.write(true);
+		} else {
+			result2.write(false);
+		}
+	}
+}
+
+task ConditionedWrite {
+	properties {
+		num_states: 0, num_transitions: 2,
+		test: {in1: [ true, false, true, false, false ], result1: [ false, true, false, true, true ] }
+	}
+
+	in bool in1; out bool result1;
+
+	u16 count;
+
+	void loop() {
+		if (in1.read()) {
+			result1.write(false);
+		} else {
+			result1.write(true);
+		}
+	}
+}
+
+task IfAfterFiring {
+	properties {
+		num_states: 2, num_transitions: 3,
+		test: {
+			cond: [ null, 2, null, 0,    null, 4 ],
+			a: [ null, 2, null, null, null, 5 ],
+			o: [ null, 3, null, null, null, 8 ]
+		}
+	}
+
+	in sync u3 cond, sync u16 a; out sync u16 o;
+	
+	u8 count;
+	
+	// this creates two firings: one for the "count++"
+	// and one for the "if"
+	void loop() {
+		count++;
+		fence;
+		if (cond.read() > count) {
+			o.write((u16) (a.read() + count));
+		}
+	}
+}
+
+task IfBasic {
+	properties {
+		num_states: 0, num_transitions: 1,
+		test: {inp: [ 5, 0, 8, 1024, 16894 ], result1: [ 510, 765, 1020, 892, 764 ] }
+	}
+
+	in sync u16 inp; out sync u16 result1;
+
+	u16 result = 255;
+
+	void loop() {
+		u16 v = inp.read();
+		if (v <= 15) {
+			result += 255;
+		} else {
+			result -= 128;
+		}
+		result1.write(result);
+	}
+}
+
+task IfBitSelect {
+	properties {
+		num_states: 0, num_transitions: 2,
+		test: {
+			a: [ false, null, true, null ],
+			b: [  true, null, true, null ],
+			o: [     3, null,    2, null ]
+		}
+	}
+
+	in sync bool a, sync b; out sync u2 o;
+
+	void loop() {
+	  u8 d = 0b1100;
+	  d[0] = a.read;
+	  d[1] = b.read;
+	  if (d[0] && d[1]) {
+	    o.write(2);
+	  } else {
+	    o.write(3);
+	  }
+	}
+}
+
+task IfCount {
+	properties {
+		num_states: 0, num_transitions: 1,
+		test: {condition: [ true, true, false, false, true ], result: [ 1, 2, 1, 0, 1 ] }
+	}
+
+	in sync bool condition;
+	out sync u3 result;
+
+	u3 count;
+
+	void loop() {
+		bool c = condition.read();
+		if (c) {
+			count++;
+		} else { 
+			count--;
+		}
+		result.write(count);
+	}
+}
+
+task IfElseIf {
+	properties {
+		num_states: 0, num_transitions: 4,
+		test: {
+			cond: [ 2,    1,       2,    2,    2,    1,   3 ],
+			a: [ null, 1,    null, null, null,    8, null ],
+			b: [ 1,    null,    2,    3,    5, null, null ],
+			c: [ null, null, null, null, null, null,   13 ],
+			o: [    1,    1,    2,    3,    5,    8,   13 ]
+		}
+	}
+
+	// number of ports to read from
+	sync {
+		in u2 cond, u16 a, b, c;
+		out u16 o;
+	}
+
+	void loop() {
+		if (cond.read == 1) {
+			o.write(a.read);
+		} else if (cond.read == 2) {
+			o.write(b.read);
+		} else if (cond.read == 3) {
+			o.write(c.read);
+		}
+	}
+}
+
+task IfElseIf2 {
+	properties {
+		num_states: 2, num_transitions: 3,
+		test: {
+			data:  [    6, 5,    5, 4,    4,    4, 3,    3,    3,    3, 2 ],
+			value: [ null, 6, null, 5, null, null, 4, null, null, null, 3 ],
+			count: [ null, 1, null, 2, null, null, 3, null, null, null, 4 ]
+		}
+	}
+
+	sync {
+		in u8 data; out u8 value, u15 count;
+	}
+
+	u8 d_ref = 6; // reference value
+	u15 i = 1;
+
+	void setup() {
+	  d_ref = data.read();
+	}
+
+	void loop() {
+		u8 d = data.read();
+		if (d_ref == d && i < 32767) {
+			i++;
+		} else {
+			count.write(i);
+			value.write(d_ref);
+			d_ref = d;
+			i = 1;
+		}
+	}
+}
+
+task IfElseIf3 {
+	properties {
+		num_states: 0, num_transitions: 3,
+		test: {
+			Ready: [ false, false, true, true, true, true, true ],
+			Word: [     2,     2,    2,    0,    0,    1,    1 ],
+			resulti: [  null,  null, null,    2,    2,    4,    4 ]
+		}
+	}
+
+	sync {
+		in bool Ready, u3 Word; out u8 resulti;
+	}
+
+	void loop() {
+		bool r = Ready.read;
+		u3 w = Word.read;
+	
+		if (r && w == 0) {
+			sendTwo();
+		} else if (r && w == 1) {
+			sendFour();		
+		}
+	}
+	
+	void sendTwo() {
+		resulti.write(2);
+	}
+	
+	void sendFour() {
+		resulti.write(4);
+	}
+}
+
+task IfElseIfStateVar1 {
+	properties {
+		num_states: 0, num_transitions: 4,
+		test: {
+			cond: [    2,    1,    2,    2,    2,    1, 3 ],
+			a: [ null,    1, null, null, null,    8, null ],
+			b: [    1, null,    2,    3,    5, null, null ],
+			c: [ null, null, null, null, null, null, 13 ],
+			o: [ 1, 1, 2, 3, 5, 8, 13 ]
+		}
+	}
+
+	// number of ports to read from
+	in sync u2 cond, sync u16 a, sync b, sync c;
+
+	// fibonacci
+	out sync u16 o;
+
+	void loop() {
+		u2 n = cond.read;
+		if (n == 1) {
+			o.write(a.read());
+		} else if (n == 2) {
+			o.write(b.read());
+		} else if (n == 3) {
+			o.write(c.read());
+		}
+	}
+}
+
+task IfElseIfStateVar2 {
+	properties {
+		num_states: 0, num_transitions: 4,
+		test: {
+			cond: [    0,    2,    1,    2,    2,    2,    1,    3 ],
+			a: [ null, null,    1, null, null, null,    8, null ],
+			b: [ null,    1, null,    2,    3,    5, null, null ],
+			c: [ null, null, null, null, null, null, null,   13 ],
+			o: [  255,    1,    1,    2,    3,    5,    8,   13 ]
+		}
+	}
+
+	in sync u2 cond;
+	in sync u16 a;
+	in sync u16 b;
+	in sync u16 c;
+
+	// fibonacci
+	out sync u16 o;
+
+	u8 count = 254;
+
+	void loop() {
+		u2 cc = cond.read();
+		count++;
+		if (cc == 1 && count != 255) {
+			o.write(a.read());
+		} else if (cc == 2 && count != 255) {
+			o.write(b.read());
+		} else if (cc == 3 && count != 255) {
+			o.write(c.read());
+		} else {
+			o.write(count);
+		}
+	}
+}
+
+task IfElseIfStateVar3 {
+	properties {
+		num_states: 2, num_transitions: 3,
+		test: {
+			cond: [    0,    1,    1,    2 ],
+			a: [ null,   48, null, null ],
+			b: [ null, null, null,   12 ],
+			o: [ null,   48, null,   12 ]
+		}
+	}
+
+	sync { in u2 cond, u16 a, b; out u16 o; }
+
+	void loop() {
+		u8 count = 0;
+		cond.read();
+	
+		u2 n = cond.read;
+		count++;
+		if (n == 1) {
+			o.write(a.read());
+		} else {
+			o.write(b.read());
+		}
+	}
+}
+
+task IfNoElse {
+	properties {
+		num_states: 2, num_transitions: 3,
+		test: {
+			cond: [ true, null, true, null, false, null, true, null, false, null ],
+			a: [    1, null,    2, null,  null, null,    3, null,  null, null ],
+			b: [ null, 1024, null, 1025, null, 1026, null,  1027, null, 1028 ],
+			result: [    1, 1024,    2, 1025, null, 1026,     3, 1027, null, 1028 ]
+		}
+	}
+
+	in sync bool cond, sync u16 a, sync b; out sync u16 result;
+
+	u16 count;
+
+	void loop() {
+		if (cond.read()) {
+			result.write(a.read());
+		}
+		result.write(b.read());
+	}
+}
+
+task IfReading {
+	properties {
+		num_states: 0, num_transitions: 2,
+		test: {
+			in1: [ true, true, true, false, false ],
+			in2: [ 2048, 1024, 512, null, null ],
+			in3: [ null, null, null, 3, 1 ],
+			result: [ 2048, 1024, 512, 3, 1 ]
+		}
+	}
+
+	in sync bool in1;
+	in sync u16 in2;
+	in sync u16 in3;
+	out sync u16 result;
+
+	u16 count;
+
+	void loop() {
+		if (in1.read()) {
+			result.write(in2.read());
+		} else {
+			result.write(in3.read());
+		}
+	} 
+}
+

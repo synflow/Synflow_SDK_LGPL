@@ -1,0 +1,294 @@
+/*******************************************************************************
+ * Copyright (c) 2012-2014 Synflow SAS.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Matthieu Wipliez
+ *    Nicolas Siret
+ *******************************************************************************/
+package com.synflow.test.pass.breaks;
+
+task Fence {
+	properties {
+		num_states: 2, num_transitions: 2,
+		test: {inp: [ null, 16, null ], outp: [ 0, 16, 16 ] }
+	}
+
+	in sync u16 inp; out sync u16 outp;
+
+	u16 temp;
+
+	void loop() {
+		outp.write(temp);
+		fence;
+		temp = inp.read();
+		outp.write(temp);
+	}
+}
+
+task IdleSimple {
+	properties {
+		num_states: 2, num_transitions: 2,
+		test: {inp: [ null, 1, null, 5 ], outp: [ null, 2, null, 6 ] }
+	}
+
+	in sync u16 inp; out sync u16 outp;
+
+	void loop() {
+		idle(1);
+		outp.write((u16) (inp.read + 1));
+	}
+}
+
+task IdleDouble {
+	properties {
+		num_states: 2, num_transitions: 2,
+		test: {inp: [ ], outp: [ ] }
+	}
+
+	in u16 inp; out u16 outp;
+
+	void loop() {
+		idle(1);
+		idle(1);
+	}
+}
+
+task IdleSetuup {
+	properties {
+		num_states: 2, num_transitions: 2,
+		test: {in1: [ 0, 0 ], in2: [ 0, 255 ], outp: [ 0, 255 ] }
+	}
+
+	in u16 in1, in2; out u16 outp;
+
+	void setup() {
+		idle(1);
+	}
+
+	void loop() {
+		outp.write((u16) (in1.read() + in2.read()));
+	}
+}
+
+task IdleFunction {
+	properties {
+		num_states: 3, num_transitions: 3,
+		test: {outp: [ 0 ] }
+	}
+
+	out u16 outp;
+
+	void loop() {
+		outp.write(0);
+		f();
+	}
+
+	void f() {
+		idle(2);
+	}
+}
+
+task IdleBeforeIf {
+	properties {
+		num_states: 4, num_transitions: 5,
+		test: {
+			 inp: [ null, null, null, false, null, null, null, true ],
+			outp: [ null, null, null,     4, null, null, null, 5 ]
+		}
+	}
+
+	in sync bool inp;
+	out sync u16 outp;
+
+	void loop() {
+		idle(3);
+		if (inp.read) {
+			outp.write(5);
+		} else {
+			outp.write(4);
+		}
+	}
+}
+
+task IdleBetweenIf {
+	properties {
+		num_states: 6, num_transitions: 8,
+		test: {inp: [ false, null, null, null, true ], outp: [ 4, null, null, null, 5 ] }
+	}
+
+	in sync bool inp; out sync u16 outp;
+
+	void loop() {
+		if (inp.read) {
+			outp.write(5);
+		} else {
+			outp.write(4);
+		}
+		idle(3);
+		if (inp.read) {
+			outp.write(5);
+		} else {
+			outp.write(4);
+		}
+		idle(1);
+	}
+}
+
+task IdleInIf {
+	properties {
+		num_states: 2, num_transitions: 3
+	}
+
+	in u8 a, sync b; out u16 c;
+
+	u8 i;
+
+	void loop() {
+		i++;
+		fence;
+		if (a.read > 0) {
+			idle(1);
+		} else {
+			i++;
+			print("ola");
+		}
+	}
+}
+
+task IdleInWhile {
+	properties {
+		num_states: 3, num_transitions: 4
+	}
+
+	in u8 a, sync b; out u16 c;
+
+	u8 i;
+
+	void loop() {
+		print("toto");
+		while (a.read > 0) {
+			idle(1);
+			print("titi");
+		}
+		print("tata");
+	}
+}
+
+task IdleAlot {
+	properties {
+		num_states: 3, num_transitions: 4,
+		test: {
+			din:  [
+				42,
+				null, null, null, null, null, null, null, null, null, null,
+				null, null, null, null, null, null, null, null, null, null,
+				// after idle, one cycle to write dout
+				null,
+				// start again, this time with 43
+				43
+			],
+			dout: [
+				// get 42
+				null,
+				// wait 20 cycles
+				null, null, null, null, null, null, null, null, null, null,
+				null, null, null, null, null, null, null, null, null, null,
+				// write back din
+				42,
+
+				// get 43
+				null,
+				// wait 20 cycles
+				null, null, null, null, null, null, null, null, null, null,
+				null, null, null, null, null, null, null, null, null, null,
+				// write back din
+				43
+			]
+		}
+	}
+
+	in sync u8 din; out sync u8 dout;
+
+	void loop() {
+		u8 v = din.read();
+		print("start idle");
+		idle(20);
+		print("end idle");
+		dout.write(v);
+	}
+
+}
+
+task MultipleReads {
+	properties {
+		num_states: 3, num_transitions: 3,
+		test: {data: [ 1, 2, 3, 4, 5, 6 ], o: [ null, null, 3, null, null, 6 ] }
+	}
+
+	in sync i18 data; out sync i18 o;
+
+	void loop() {
+		i18 dummy = data.read();
+		dummy = data.read();
+		o.write(data.read());
+	}
+}
+
+task MultipleReads2 {
+	properties {
+		num_states: 3, num_transitions: 3,
+		test: {data: [ 1, 2, 3, 4, 5, 6 ], o: [ null, null, 3, null, null, 6 ] }
+	}
+
+	in sync i18 data; out sync i18 o;
+
+	void loop() {
+		data.read();
+		data.read();
+		o.write(data.read());
+	}
+}
+
+task MultipleWrites {
+	properties {
+		num_states: 4, num_transitions: 4,
+		test: {i: [ 1 ], o: [ 1, 2, 3, 4 ] }
+	}
+
+	in sync i18 i; out sync i18 o;
+
+	void loop() {
+		o.write(i.read());
+		o.write(2);
+		o.write(3);
+		o.write(4);
+	}
+}
+
+task MultipleWrites2 {
+	properties {
+		num_states: 4, num_transitions: 4,
+		test: {i: [ 42, null, null, 4 ], o: [ 1, 2, 3, 4 ] }
+	}
+
+	in sync i18 i; out sync i18 o;
+
+	void loop() {
+		char count = (char) i.read();
+		o.write(1);
+		count++;
+		count--;
+		if (count > 0) {
+			count = 0;
+		} else {
+			count = 3;
+		}
+		o.write(2);
+		o.write(3);
+		o.write(i.read());
+	}
+}

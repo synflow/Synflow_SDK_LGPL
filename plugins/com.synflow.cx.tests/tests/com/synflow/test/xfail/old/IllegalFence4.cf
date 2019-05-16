@@ -1,0 +1,14 @@
+port in u8 inp;
+port out u8 outp;
+
+u8 i;
+
+void main() {
+	if (inp.read > 5) {
+	}
+
+	fence();
+
+	for (i = 0; i < 5; i++) {
+	}
+}

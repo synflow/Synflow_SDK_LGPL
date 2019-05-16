@@ -1,0 +1,11 @@
+port in bool a, b;
+
+u32 x;
+
+void main() {
+	if (a.available && b.read) {
+		x++;
+	} else {
+		x--;
+	}
+}

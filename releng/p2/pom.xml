@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+  xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.synflow</groupId>
+    <artifactId>com.synflow.ngDesign.releng.build</artifactId>
+    <version><!-- ${ngDesign-version} -->0.92.0-SNAPSHOT</version>
+    <relativePath>..</relativePath>
+  </parent>
+
+  <artifactId>com.synflow.ngDesign.releng.p2</artifactId>
+  <packaging>eclipse-repository</packaging>
+
+  <build>
+    <extensions>
+      <!-- Enabling the use of SSH -->
+      <extension>
+        <groupId>org.apache.maven.wagon</groupId>
+        <artifactId>wagon-ssh</artifactId>
+        <version>2.10</version>
+      </extension>
+    </extensions>
+
+    <plugins>
+      <!-- first, copy update site to nightly -->
+    <!--  <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>wagon-maven-plugin</artifactId>
+        <version>1.0</version>
+        <executions>
+          <execution>
+            <id>upload-repository</id>
+            <phase>install</phase>
+            <goals>
+              <goal>upload</goal>
+            </goals>
+            <configuration>
+              <fromDir>${project.build.directory}/repository</fromDir>
+              <url>scp://upload@synflow.com</url>
+              <toDir>/home/upload/nightly/${buildQualifier}</toDir>
+              <serverId>ssh-repository</serverId>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin> -->
+
+      <!-- copy JSch to ant lib folder, and update remote repository -->
+      <plugin>
+        <groupId>org.eclipse.tycho.extras</groupId>
+        <artifactId>tycho-eclipserun-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>eclipse-run</goal>
+            </goals>
+            <phase>install</phase>
+            <id>copy-jsch</id>
+            <configuration>
+              <appArgLine>-consoleLog -application org.eclipse.ant.core.antRunner -buildfile copy_jsch.xml -DbuildQualifier=${buildQualifier}</appArgLine>
+            </configuration>
+          </execution>
+
+          <execution>
+            <goals>
+              <goal>eclipse-run</goal>
+            </goals>
+            <phase>install</phase>
+            <id>update-repository</id>
+            <configuration>
+              <appArgLine>-consoleLog -application org.eclipse.ant.core.antRunner -buildfile update_repo.xml -DbuildQualifier=${buildQualifier}</appArgLine>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>

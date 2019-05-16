@@ -1,0 +1,112 @@
+/*******************************************************************************
+ * Copyright (c) 2012-2014 Synflow SAS.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Matthieu Wipliez
+ *    Nicolas Siret
+ *******************************************************************************/
+package com.synflow.test.app.basics;
+
+network Pipeline {
+
+	in sync u8 a, sync b, sync c; out sync u17 res;
+
+	stage_1 = new task {
+		out sync u9 res;
+		void loop() {
+			res.write(a.read + b.read); 
+		}
+	};
+
+	stage_2 = new task {
+		void loop() {
+			res.write(stage_1.res.read * c.read); 
+		}
+	};
+
+}
+
+bundle Definitions {
+	typedef u9 count_t;
+	typedef u6 clipped;
+}
+
+network TopCounter {
+
+	out bool OutData, u15 digits;
+
+	counter = new task {
+		out Definitions.count_t count;
+
+		Definitions.count_t count_i;
+
+		void loop() { // 9-bit wrap-around counter.
+			count.write(count_i);
+			count_i++;
+		}
+	};
+
+	clip = new task {
+		out Definitions.clipped O;
+
+		void loop() {
+			Definitions.count_t local = counter.count.read();
+			O.write(local > 63 ? 63 : (u6) local);
+		}
+	};
+
+	digit = new task {
+		void loop() { // Manages the 15-segments display of the Versa board.
+			Definitions.count_t count = counter.count.read;
+			u15 tmp;
+			if (count < 100) {
+				tmp = 0x01FF;
+			} else if (count < 200) {
+				tmp = 0x4FFF;
+			} else if (count < 300) {
+				tmp = 0x13DD;
+			} else if (count < 400) {
+				tmp = 0x07DD;
+			} else if (count < 500) {
+				tmp = 0x4DDD;
+			} else if (count < 511) {
+				tmp = 0x25DD;
+			} else {
+				tmp = 0x7EAB;
+			}
+			digits.write(tmp);
+		}
+	};
+
+	compare = new Compare();
+	compare.reads(clip.O, counter.count);
+	compare.writes(OutData);
+}
+
+task Compare {
+	import com.synflow.test.app.basics.Definitions.*;
+
+	in clipped clip, count_t count; out bool result;
+
+	count_t temp;
+
+	void setup() {
+		// reads from "count" in the second cycle
+		idle(1);
+		temp = count.read();
+	}
+
+	/**
+	 * Compares its two inputs.
+	 */
+	void loop() {
+		clipped v = clip.read();
+		bool comparison = temp == v;
+		result.write(comparison);
+		temp = count.read();
+	}
+}

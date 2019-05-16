@@ -1,0 +1,7 @@
+port in u32 x;
+port out u32 y;
+
+void main() {
+	u32 v = x.read();
+	y.write(v[15][0]);
+}

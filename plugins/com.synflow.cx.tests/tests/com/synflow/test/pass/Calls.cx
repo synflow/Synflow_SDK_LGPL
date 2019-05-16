@@ -1,0 +1,320 @@
+/*******************************************************************************
+ * Copyright (c) 2012-2014 Synflow SAS.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Matthieu Wipliez
+ *    Nicolas Siret
+ *******************************************************************************/
+package com.synflow.test.pass.calls;
+
+task AssertTest {
+	properties {
+		test: {in1: [ 0xFFFF_FFFF ], in2: [ 1 ], outp: [ true ] }
+	}
+
+	in sync u32 in1, sync in2; out sync bool outp;
+
+	void loop() {
+	  assert(in1.read + in2.read - 1 == 0xFFFF_FFFF);
+	  outp.write(true);
+	}
+}
+
+task Call1 {
+	properties {
+		test: {i: [ 1, 2, 3, 4 ], o: [ null, 3, null, 7 ] }
+	}
+
+	in sync u4 i; out sync u4 o;
+
+	void loop() {
+		u4 a = i.read();
+		u4 b = i.read();
+		o.write((u4) (g() * f(a, b)));
+	}
+	
+	const u4 f(u4 x, u4 y) {
+		return (u4) (x + y);
+	}
+	
+	const u4 g() {
+		return 1;
+	}
+}
+
+task Call2 {
+	properties {
+		num_states: 0, num_transitions: 1,
+		test: {bitt: [ false, false, true ], outp: [ false, true, false ] }
+	}
+
+	in sync bool bitt;
+	out sync bool outp;
+
+	const u4 XYZ = 2;
+
+	u4 TAB[4] = { 0, 3, 2, 1 };
+	u5 count = 1;
+
+	void loop() {
+		bool b = isOk(bitt.read);
+		if (!b) {
+			TAB[1] = 2;
+		}
+	
+		count++;
+		outp.write(b);
+	}
+	
+	const bool isOk(bool b) {
+		return count == TAB[1] && count != 0;
+	}
+}
+
+task Call3 {
+	properties {
+		test: { Stim: [ 3 ], Res: [ 42 ] }
+	}
+
+	// it's ok to call functions that are defined later
+
+	in sync u8 Stim;
+	out sync u16 Res;
+
+	void loop() {
+		u16 x = Stim.read();
+		Res.write(isA(x) ? 1 : (isB(x) ? 2 : 42));
+	}
+
+	const bool isA(u16 n) {
+		return !isB(n) && n == A;
+	}
+
+	const bool isB(u16 n) {
+		return n == B;
+	}
+
+	const u16 A = 1;
+	const u16 B = 2;
+}
+
+task Invoke1 {
+	properties {
+		num_states: 0, num_transitions: 1,
+		test: {i: [ 1, 2, 3 ], o: [ 1, 2, 3 ] }
+	}
+
+	in sync u16 i; out sync u16 o;
+
+	void loop() {
+		f();
+	}
+
+	void f() {
+		o.write(i.read());
+	}
+}
+
+task Invoke2 {
+	properties {
+		num_states: 2, num_transitions: 2,
+		test: {
+			i: [ 1,       2,    3,    4,    5,    6 ],
+			o: [ 1,    null,    3, null,    5, null ],
+			o2: [ null,    4, null,    8, null,   12 ]
+		}
+	}
+
+	sync {
+		in u16 i; out u16 o, o2;
+	}
+
+	void loop() {
+		f();
+		g();
+	}
+
+	void f() {
+		o.write(i.read());
+	}
+
+	void g() {
+		o2.write((i.read() << 1) & 0xFFFF);
+	}
+}
+
+task Invoke3 {
+	properties {
+		num_states: 0, num_transitions: 2,
+		test: {
+			c: [ 1,    1,      -1,    1,   -1, -1 ],
+			i: [ 1,    2,       3,    4,    5, 6 ],
+			o: [ 1,    2,    null,    4, null, null ],
+			o2: [ null, null,    6, null,   10, 12 ]
+		}
+	}
+
+	sync {
+		in i16 c, i;
+		out i16 o, o2;
+	}
+
+	void loop() {
+		if (c.read() > 0) {
+			f();
+		} else {
+			g();
+		}
+	}
+	
+	void f() {
+		o.write(i.read());
+	}
+	
+	void g() {
+		o2.write((i16) (i.read() << 1));
+	}
+}
+
+task Invoke4 {
+	properties {
+		num_states: 2, num_transitions: 4,
+		test: {
+			i: [ null,    1,    2,    3, null,    5,    6, null, 7 ],
+			o: [ null, null, null,    3, null, null, null, null, 7 ],
+			o2: [ null, null, null, null, null, null, null, null, null ]
+		}
+	}
+
+	in sync u16 i; out sync u16 o, sync o2;
+
+	u16 n, c;
+	bool cond = true;
+
+	void loop() {
+		for (n = 0; n < 2; n++) {
+			c = i.read();
+		}
+	
+		if (cond) {
+			f();
+		} else {
+			g();
+		}
+	}
+
+	void f() {
+		o.write(i.read());
+	}
+
+	void g() {
+	}
+}
+
+task Invoke5 {
+	properties {
+		num_states: 4, num_transitions: 4,
+		test: {i: [ 1, 2, 3, 4, 5, 6 ], o: [ 1, 2, 3, 4, 5, 6 ] }
+	}
+
+	in u16 i; out u16 o;
+
+	void loop() {
+		f();
+		f();
+	}
+	
+	void f() {
+		o.write(i.read());
+		o.write(i.read());
+	}
+}
+
+task Invoke6 {
+	properties {
+		num_states: 4, num_transitions: 5,
+		test: {
+			i: [ null, 1, 2, 3, 4, 5, 6, 7, 8 ],
+			o: [ null, 1, 2, 3, 4, 5, 6, 7, 8 ]
+		}
+	}
+
+	in sync u16 i; out sync u16 o;
+
+	u2 count;
+
+	void loop() {
+		for (count = 0; count < 3; count++) {
+			f();
+		}
+		f();
+	}
+	
+	void f() {
+		o.write(i.read());
+		o.write(i.read());
+	}
+}
+
+task Invoke7 {
+	properties {
+		num_states: 2, num_transitions: 4,
+		test: {
+			cond: [ null, true, true, true, true, true, false ],
+			outp: [ null, null, null, null, null, null, 16 ]
+		}
+	}
+
+	in sync bool cond; out sync u16 outp;
+
+	u16 result;
+
+	void loop() {
+		result = 1;
+		if (cond.read()) {
+			f();
+		}
+	}
+	
+	void f() {
+		while (cond.read()) {
+			result <<= 1;
+		}
+		outp.write(result);
+	}
+}
+
+task PrintStmt {
+	properties {
+		test: {in1: [ 0xFFFF_FFFF ], in2: [ 1 ], outp: [ true ] }
+	}
+
+	in sync u32 in1, sync in2; out sync bool outp;
+
+	void loop() {
+	  bool justAbool = false;
+	  print("sum = ", (in1.read + in2.read + 58) & 0x1_FFFF_FFFF, " and writing ", true, justAbool);
+	  outp.write(true);
+	}
+}
+
+task SubWord {
+	properties {
+		test: {inw: [ 0x01, 0x10, 0x80, 0xFF ], outw: [ null, 0x0110, null, 0x80FF ] }
+	}
+
+	in sync char inw; out sync ushort outw;
+
+	void loop() {
+		char first = inw.read;
+		outw.write(f(first, inw.read));
+	}
+
+	const ushort f(char c1, char c2) {
+		return ((c1 << 16) >> 8) | c2;
+	}
+}

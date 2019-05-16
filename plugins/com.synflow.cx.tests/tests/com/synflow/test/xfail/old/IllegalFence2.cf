@@ -1,0 +1,7 @@
+port in u8 inp;
+
+void main() {
+	inp.read();
+	inp.read();
+	fence();
+}

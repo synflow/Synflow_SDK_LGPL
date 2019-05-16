@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.0"?>
+
+<plugin>
+
+  <extension point="org.eclipse.emf.ecore.generated_package">
+    <package 
+       uri = "http://www.synflow.com/cx/Cx" 
+       class = "com.synflow.cx.cx.CxPackage"
+       genModel = "model/Cx.genmodel" /> 
+	
+  </extension>
+  <extension
+        id="cycleIndicator"
+        point="org.eclipse.core.resources.markers">
+     <super
+           type="org.eclipse.core.resources.textmarker">
+     </super>
+  </extension>
+
+
+
+
+</plugin>

@@ -1,0 +1,7 @@
+port in bool flag;
+
+u5 v;
+
+void main() {
+	v = flag.read;
+}

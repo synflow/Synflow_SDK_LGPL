@@ -1,0 +1,41 @@
+<project name="SignCode" default="main" basedir=".">
+  <description>
+    Ant build file to sign executables
+  </description>
+
+  <!-- main task -->
+  <target name="main" description="Sign code">
+    <echo>running in ${basedir}</echo>
+    <antcall target="sign-code">
+      <param name="arch" value="x86_64"/>
+    </antcall>
+
+    <antcall target="sign-code">
+      <param name="arch" value="x86"/>
+    </antcall>
+  </target>
+
+  <target name="sign-code">
+    <exec executable="osslsigncode" os="Linux">
+      <arg value="sign"/>
+      <arg value="-certs"/>
+      <arg value="${user.home}/.ssh/code_signing.crt"/>
+      <arg value="-key"/>
+      <arg value="${user.home}/.ssh/code_signing_key.pem"/>
+      <arg value="-n"/>
+      <arg value="Synflow ngDesign"/>
+      <arg value="-i"/>
+      <arg value="https://www.synflow.com"/>
+      <arg value="-ts"/>
+      <arg value="http://www.startssl.com/timestamp"/>
+      <arg value="target/products/ngDesign/win32/win32/${arch}/ngDesign/ngDesign.exe"/>
+      <arg value="target/products/ngDesign/win32/win32/${arch}/ngDesign/ngDesign.signed.exe"/>
+    </exec>
+
+    <exec executable="mv" os="Linux">
+      <arg value="target/products/ngDesign/win32/win32/${arch}/ngDesign/ngDesign.signed.exe"/>
+      <arg value="target/products/ngDesign/win32/win32/${arch}/ngDesign/ngDesign.exe"/>
+    </exec>
+  </target>
+
+</project>

@@ -1,0 +1,276 @@
+/*******************************************************************************
+ * Copyright (c) 2012-2014 Synflow SAS.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Matthieu Wipliez
+ *    Nicolas Siret
+ *******************************************************************************/
+package com.synflow.test.pass.if_cont_hard;
+
+task ManyIfs1 {
+	properties {
+		num_states: 0, num_transitions: 6,
+		test: {
+			a: [   -1,    0,     1 ],
+			b: [    5,   -1,    -2 ],
+			oa: [ true, null, false ],
+			ob: [ null,   -1,    -2 ]
+		}
+	}
+
+	in sync i16 a, b; out sync bool oa, sync i16 ob;
+
+	bool a_ok, b_ok, c_ok;
+
+	void loop() {
+	  if (a.read > 0) {
+	  	oa.write(false);
+	  } else if (a.read < 0) {
+	    oa.write(true);
+	  }
+	
+	  if (b.read < 0) {
+	    ob.write(b.read);
+	  }
+	}
+}
+
+task ManyIfs2 {
+	properties {
+		num_states: 0, num_transitions: 16,
+		test: {
+			a: [ true, true, null, null, null, true, null, true ],
+			b: [ null, true, null, null, true, null, null, true ],
+			c: [ null, null, true, true, null, null, null, true ],
+			o: [ null, null, true, null, null, true, null, true ]
+		}
+	}
+
+	in sync bool a, sync b, sync c; out sync bool o;
+
+	bool a_ok, b_ok, c_ok;
+
+	void loop() {
+	  if (a.available) { a_ok = true; }
+	  if (b.available) { b_ok = true; }
+	  if (c.available) { c_ok = true; }
+	
+	  if (a_ok && b_ok && c_ok) {
+	    o.write(true);
+	    a_ok = 0; b_ok = 0; c_ok = 0;
+	  }
+	}
+}
+
+task ManyNested1 {
+	properties {
+		num_states: 0, num_transitions: 15,
+		test: {
+			a2: [ false, false, false, false,  true,  true,  true, true ],
+			a1: [ false, false,  true,  true, false, false,  true, true ],
+			a0: [ false,  true, false,  true, false,  true, false, true ],
+			o: [  null,  null,  null,  null,      4,     5,     6,    7 ],
+		
+			b2: [ false, false, false, false,  true,  true,  true, true ],
+			b1: [ false, false,  true,  true, false, false,  true, true ],
+			b0: [ false, true,  false,  true, false,  true, false, true ],
+			o2: [   0,      1,      2,    3,      4,     5,     6,    7 ]
+		}
+	}
+
+	sync {
+		in bool a0, a1, a2, b0, b1, b2;
+		out u3 o, o2;
+	}
+
+	void loop() {
+	  if (a2.read) {
+	    u3 tmp;
+	    if (a1.read) {
+	      tmp = 6 | (a0.read ? 1 : 0);
+	      print("o: writing ", tmp);
+	      o.write(tmp);
+	    } else {
+	      tmp = 4 | (a0.read ? 1 : 0);
+	      print("o: writing ", tmp);
+	      o.write(tmp);
+	    }
+	  }
+	
+	  u3 tmp2;
+	  if (b2.read) {
+	    tmp2 = 4 | (b1.read ? 2 : 0) | (b0.read ? 1 : 0);
+	    print("o2: writing ", tmp2);
+	    o2.write(tmp2);
+	  } else {
+	    if (b1.read) {
+	      if (b0.read) {
+	        print("o2: writing 3");
+	        o2.write(3);
+	      } else {
+	        print("o2: writing 2");
+	        o2.write(2);
+	      }
+	    } else {
+	      if (b0.read) {
+	        print("o2: writing 1");
+	        o2.write(1);
+	      } else {
+	        print("o2: writing 0");
+	        o2.write(0);
+	      }
+	    }
+	  }
+	}
+}
+
+task NestedIfs1 {
+	properties {
+		num_states: 0, num_transitions: 5,
+		test: {
+			we: [ true, true, false, true, false, true ],
+			o1: [   13,   14,  null,   16,  null, null ],
+			o2: [ null,   14,  null,   16,  null, null ],
+			o3: [ null, null,  null,   16,  null, null ],
+			ox: [ null, null,    15, null,    17, null ]
+		}
+	}
+
+	sync {
+		in bool we; out u16 o1, o2, o3, ox;
+	}
+
+	u8 adr = 13;
+
+	void loop() {
+	  if (we.read) {
+	    if (adr == 13) {
+	      print("hello 13");
+	      o1.write(13);
+	    } else if (adr == 14) {
+	      o1.write(14);
+	      o2.write(14);
+	    } else if (adr == 16) {
+	      o1.write(16);
+	      o2.write(16);
+	      o3.write(16);
+	    }
+	  } else {
+	    ox.write(adr);
+	  }
+	
+	  adr++;
+	}
+}
+
+task NestedIfs2 {
+	properties {
+		num_states: 0, num_transitions: 8,
+		test: {
+			a2: [ false, false, false, false,  true,  true,  true, true ],
+			a1: [ false, false,  true,  true, false, false,  true, true ],
+			a0: [ false, true,  false,  true, false,  true, false, true ],
+			o: [   0,      1,      2,    3,      4,     5,     6,    7 ]
+		}
+	}
+
+	in bool a0, a1, a2; out u3 o;
+
+	u8 adr = 13;
+
+	void loop() {
+	  if (a2.read) {
+	    if (a1.read) {
+	      if (a0.read) {
+	        o.write(7);
+	      } else {
+	        o.write(6);
+	      }
+	    } else {
+	      if (a0.read) {
+	        o.write(5);
+	      } else {
+	        o.write(4);
+	      }
+	    }
+	  } else {
+	    if (a1.read) {
+	      if (a0.read) {
+	        o.write(3);
+	      } else {
+	        o.write(2);
+	      }
+	    } else {
+	      if (a0.read) {
+	        o.write(1);
+	      } else {
+	        o.write(0);
+	      }
+	    }
+	  }
+	}
+}
+
+task NestedIfs3 {
+	properties {
+		num_states: 0, num_transitions: 4,
+		test: {
+			a2: [ false, false, false, false,  true,  true,  true, true ],
+			a1: [ false, false,  true,  true, false, false,  true, true ],
+			a0: [ false,  true, false,  true, false,  true, false, true ],
+			o: [  null,  null,  null,  null,  null,  null,  null,    7 ]
+		}
+	}
+
+	in bool a0, a1, a2; out sync u3 o;
+
+	u8 adr = 13;
+
+	void loop() {
+	  if (a2.read) {
+	    if (a1.read) {
+	      if (a0.read) {
+	        o.write(7);
+	      }
+	    }
+	  }
+	}
+}
+
+task NestedIfs4 {
+	properties {
+		num_states: 0, num_transitions: 4,
+		test: {
+			a2: [ false, false, false, false,  true,  true,  true, true ],
+			a1: [ false, false,  true,  true, false, false,  true, true ],
+			a0: [ false,  true, false,  true, false,  true, false, true ],
+			o: [    42,  null,  null,  null,  null,  null,  null, null ]
+		}
+	}
+
+	in sync bool a0, sync a1, sync a2; out sync u7 o;
+
+	u8 adr = 13;
+
+	void loop() {
+	  if (a2.read) {
+	    print("ignoring 1xx");
+	  } else {
+	    if (a1.read) {
+	      print("ignoring 01x");
+	    } else {
+	      if (a0.read) {
+	        print("ignoring 001");
+	      } else {
+	        print("writing 42");
+	        o.write(42);
+	      }
+	    }
+	  }
+	}
+}
+

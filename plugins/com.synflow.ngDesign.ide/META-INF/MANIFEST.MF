@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Localization: plugin
+Bundle-Name: %pluginName
+Bundle-SymbolicName: com.synflow.ngDesign.ide;singleton:=true
+Bundle-Version: 0.92.0.qualifier
+Bundle-Vendor: %providerName
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.ui.intro,
+ org.eclipse.egit.ui,
+ com.synflow.ngDesign.ui;bundle-version="0.92.0"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-ClassPath: .
+

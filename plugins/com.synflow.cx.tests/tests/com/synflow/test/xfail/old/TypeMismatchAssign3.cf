@@ -1,0 +1,7 @@
+port in u32 x, out y;
+
+u5 v;
+
+void main() {
+	v &&= 5;
+}

@@ -1,0 +1,9 @@
+port in u8 inp;
+port out u8 outp;
+
+void main() {
+	u8 x = inp.read();
+	fence();
+	fence();
+	outp.write(x);
+}

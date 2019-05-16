@@ -1,0 +1,9 @@
+port out int res;
+
+void main() {
+	res.write(f(5));
+}
+
+int f(int a, int b) {
+	return a + b;
+}

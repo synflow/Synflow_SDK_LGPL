@@ -1,0 +1,8 @@
+port in bool p, out sync o;
+
+void main() {
+	// p must be sync for 'available' to work
+	if (p.available) {
+		o.write(p.read);
+	}
+}

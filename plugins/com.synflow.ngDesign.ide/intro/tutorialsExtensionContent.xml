@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<introContent>
+  <extensionContent id="com.synflow.ngDesign" path="tutorials/@">
+    <group label="Online courses" id="tutorials" style-id="content-group">
+      <link url="http://org.eclipse.ui.intro/openBrowser?url=https://synflow.gitlab.io/courses/" label="Introduction to the Cx language" style-id="content-link">
+        <text>This course on Open Learning helps you get started with the Cx language.</text>
+      </link>
+    </group>
+  </extensionContent>
+</introContent>

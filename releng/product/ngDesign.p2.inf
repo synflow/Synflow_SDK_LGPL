@@ -1,0 +1,10 @@
+# Define P2 repository, see
+# http://help.eclipse.org/luna/index.jsp?topic=/org.eclipse.platform.doc.isv/guide/p2_actions_touchpoints.html
+# http://www.ralfebert.de/blog/eclipsercp/p2_updates_tutorial/
+instructions.configure = \
+  org.eclipse.equinox.p2.touchpoint.eclipse.addRepository(location:http${#58}//updates.synflow.com/,type:0,name:Synflow Updates,enabled:true); \
+  org.eclipse.equinox.p2.touchpoint.eclipse.addRepository(location:http${#58}//updates.synflow.com/,type:1,name:Synflow Updates,enabled:true); \
+  org.eclipse.equinox.p2.touchpoint.eclipse.addRepository(location:http${#58}//nightly.synflow.com/,type:0,name:Synflow Nightly Updates,enabled:false); \
+  org.eclipse.equinox.p2.touchpoint.eclipse.addRepository(location:http${#58}//nightly.synflow.com/,type:1,name:Synflow Nightly Updates,enabled:false); \
+  org.eclipse.equinox.p2.touchpoint.eclipse.addRepository(location:http${#58}//download.eclipse.org/releases/luna/,type:0,name:Luna,enabled:true); \
+  org.eclipse.equinox.p2.touchpoint.eclipse.addRepository(location:http${#58}//download.eclipse.org/releases/luna/,type:1,name:Luna,enabled:true);

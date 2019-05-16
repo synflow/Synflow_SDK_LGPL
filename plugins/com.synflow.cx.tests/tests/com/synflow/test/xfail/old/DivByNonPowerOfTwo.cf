@@ -1,0 +1,8 @@
+port in u32 x;
+port out u32 y;
+
+const u32 w = 18;
+
+void main() {
+	y.write(x.read() / w);
+}

@@ -1,0 +1,6 @@
+port in u16 in1, in2, out outp;
+
+@Test(in1 = { 0, 65535, 112, 65535, 4095 }, in2 = { 255, 1, 112, 255, 4095 }, outp = { 255, 0, 224, 254, 8190 })
+void main() {
+	outp.write(in1.read() + in2.read());
+}

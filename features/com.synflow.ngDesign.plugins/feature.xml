@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="com.synflow.ngDesign.plugins"
+      label="%featureName"
+      version="0.92.0.qualifier"
+      provider-name="%providerName">
+
+   <description>
+      %description
+   </description>
+
+   <copyright>
+      Copyright (c) 2012-2019, Synflow SAS
+      All rights reserved.
+   </copyright>
+
+   <license url="https://gitlab.com/synflow/ngdesign_gplv3/blob/master/LICENSE">
+      The license agreement GNU GPL v3 is available at https://gitlab.com/synflow/ngdesign_gplv3/blob/master/LICENSE
+   </license>
+
+   <url>
+      <update label="Synflow Update Site" url="http://updates.synflow.com"/>
+   </url>
+
+   <plugin
+         id="com.synflow.ngDesign.libraries"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         fragment="true"
+         unpack="false"/>
+
+   <plugin
+         id="com.synflow.ngDesign"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="com.synflow.ngDesign.doc"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="com.synflow.ngDesign.ui"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="com.synflow.core"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="com.synflow.cx"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="com.synflow.cx.ui"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+</feature>

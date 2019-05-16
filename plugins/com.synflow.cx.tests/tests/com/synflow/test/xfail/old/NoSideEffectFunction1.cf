@@ -1,0 +1,14 @@
+port in u16 _in;
+
+port out u8 outp;
+
+u12 stateVar = 53;
+
+void main() {
+	f(3);
+}
+
+int f(int x) {
+	stateVar++;
+	return x;
+}

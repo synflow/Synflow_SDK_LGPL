@@ -1,0 +1,9 @@
+port in bool a, b;
+
+u32 x;
+
+void main() {
+	while (a.available && b.read) {
+		x++;
+	}
+}

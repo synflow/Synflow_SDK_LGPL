@@ -1,0 +1,89 @@
+/*******************************************************************************
+ * Copyright (c) 2012-2014 Synflow SAS.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Matthieu Wipliez
+ *    Nicolas Siret
+ *******************************************************************************/
+package com.synflow.test.pass.bools;
+
+task BoolTest1 {
+	properties {
+		test: {din: [ true, true, true, true ], dout: [ null, true, null, true ] }
+	}
+
+	sync { in bool din; out bool dout; }
+
+	void loop() {
+		assert(din.read() == true);
+		dout.write(din.read());
+	}
+}
+
+task BoolTest2 {
+	properties {
+		test: {outp: [ false, true, false, true, false, true, false, true ] }
+	}
+
+	out sync bool outp;
+
+	void loop() {
+		bool x = 0;
+		outp.write(x);
+		x = 1;
+		outp.write(x);
+		outp.write(0);
+		outp.write(1);
+	
+		// this is valid because we allow transparent conversion of u1 to bool
+		uint y = 17;
+		outp.write(y & 0);
+		outp.write(y % 2);
+		outp.write(y[2]);
+		outp.write(y[4]);
+	}
+}
+
+task Clip {
+	properties {
+		test: {I: [ 256, -1, 128 ], O: [ 255, 0, 128 ] }
+	}
+
+	in i10 I; out i9 O;
+
+	/* 
+	 * writes the input clipped to [0..255]
+	 */
+	void loop() {
+		i10 local = I.read();
+		O.write(local > 255 ? 255 : (local < 0 ? 0 : (i9) local));
+	}
+}
+
+task Compare {
+	properties {
+		test: {count: [ 0, 1, 2, 3, 4 ], clip: [ 0, 1, 2, 0, 1 ], result: [ true, true, true, false, false ] }
+	}
+
+	in u9 count, clip; out bool result;
+
+	void loop() {
+		result.write(count.read() == clip.read());
+	}
+}
+
+task Compare2 {
+	properties {
+		test: {count: [ 0, 255, 128 ], clip: [ 0, 0, 255 ], result: [ false, true, false ] }
+	}
+
+	in u8 count, u8 clip; out bool result;
+
+	void loop() {
+		result.write(count.read() > clip.read());
+	}
+}

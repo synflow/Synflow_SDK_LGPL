@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<introContent>
+  <extensionContent id="com.synflow.ngDesign" path="whatsnew/@">
+    <group id="whatsnew" style-id="content-group">
+      <link url="http://org.eclipse.ui.intro/openURL?url=https://www.synflow.com/changelog" label="Changelog" style-id="content-link">
+        <text>Shows the changelog of this version.</text>
+      </link>
+    </group>
+  </extensionContent>
+</introContent>

@@ -1,0 +1,23 @@
+<project name="CopyJsch" default="main" basedir=".">
+  <description>
+    Ant build file to copy jsch JAR into ${user.home}/.ant/lib
+  </description>
+
+  <!-- main task -->
+  <target name="main" description="Copies jsch JAR into ${user.home}/.ant/lib">
+    <loadresource property="jsch">
+      <propertyresource name="osgi.bundles"/>
+      <filterchain>
+        <tokenfilter>
+          <stringtokenizer delims="," suppressdelims="true" />
+          <containsregex pattern="reference:file:(.*/com\.jcraft\.jsch/.*/com\.jcraft\.jsch-.*\.jar)" replace="\1" />
+        </tokenfilter>
+      </filterchain>
+    </loadresource>
+  
+    <echo message="value of jsch: ${jsch}"/>
+
+    <copy file="${jsch}" todir="${user.home}/.ant/lib" />
+  </target>
+
+</project>
