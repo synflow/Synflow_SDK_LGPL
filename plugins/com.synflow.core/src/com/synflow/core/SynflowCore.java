@@ -141,7 +141,7 @@ public class SynflowCore implements BundleActivator {
 		for (IConfigurationElement element : elements) {
 			if ("generator".equals(element.getName())) {
 				String name = element.getAttribute("name");
-				ICodeGenerator generator = getDefault().getInstance(ICodeGenerator.class, name);
+				//ICodeGenerator generator = getDefault().getInstance(ICodeGenerator.class, name);
 				generators.add(name);
 			}
 		}
