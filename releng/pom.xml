@@ -12,9 +12,7 @@
     <relativePath>com.synflow.ngDesign.releng</relativePath>
   </parent>
 
-  <groupId>com.synflow</groupId>
   <artifactId>com.synflow.ngDesign.releng.build</artifactId>
-  <version><!-- ${ngDesign-version} -->0.92.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <modules>

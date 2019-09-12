@@ -24,7 +24,7 @@ package com.synflow.cx.ui.wizards;
  *
  * @author Matthieu Wipliez
  */
-public class NewBundleWizard extends NewFileWizard {
+class NewBundleWizard extends NewFileWizard {
 
 	public static val WIZARD_ID = "com.synflow.cx.ui.wizards.newBundle"
 

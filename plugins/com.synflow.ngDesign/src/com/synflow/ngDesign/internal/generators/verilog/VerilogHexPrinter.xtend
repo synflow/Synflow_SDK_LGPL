@@ -35,7 +35,7 @@ import static extension com.synflow.ngDesign.internal.generators.GeneratorExtens
  * @author Matthieu Wipliez
  *
  */
-public class VerilogHexPrinter extends IrSwitch<CharSequence> {
+class VerilogHexPrinter extends IrSwitch<CharSequence> {
 
 	val int numDigits
 

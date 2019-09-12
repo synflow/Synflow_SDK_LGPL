@@ -24,7 +24,7 @@ package com.synflow.cx.ui.wizards;
  *
  * @author Matthieu Wipliez
  */
-public class NewTaskWizard extends NewFileWizard {
+class NewTaskWizard extends NewFileWizard {
 
 	public static val WIZARD_ID = "com.synflow.cx.ui.wizards.newTask"
 

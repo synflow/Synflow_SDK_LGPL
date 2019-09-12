@@ -24,6 +24,7 @@ import org.eclipse.jface.resource.CompositeImageDescriptor;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
+import org.eclipse.swt.graphics.ImageDataProvider;
 import org.eclipse.swt.graphics.Point;
 
 import com.synflow.cx.ui.internal.CxActivator;
@@ -59,16 +60,17 @@ public class CxImageDescriptor extends CompositeImageDescriptor {
 	}
 
 	private void addBottomLeftImage(ImageDescriptor desc) {
-		ImageData data = desc.getImageData();
+		ImageData data = desc.getImageData(100);
 		int y = size.y - data.height;
 		if (data.width < getSize().x && y >= 0) {
-			drawImage(data, 0, y);
+			drawImage(createCachedImageDataProvider(desc), 0, y);
 		}
 	}
 
 	@Override
 	protected void drawCompositeImage(int width, int height) {
-		drawImage(baseImage.getImageData(), 0, 0);
+		ImageDataProvider imageProvider = createCachedImageDataProvider(baseImage);
+		drawImage(imageProvider, 0, 0);
 
 		if (severity == IMarker.SEVERITY_ERROR) {
 			addBottomLeftImage(ERROR);
