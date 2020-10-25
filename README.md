@@ -5,7 +5,8 @@ The Synflow SDK is the compiler + IDE for the Cx programming language. See http:
 # License
 
 The code is under GNU General Public License v3.0 LGPL. Some files are also licensed under the BSD license (as indicated in the header of said files).
-Copyright © `2015-2020` `Synflow, a trademark of NextDF EIRL>`
+
+Copyright © `2015-2020` `Synflow, a trademark of NextDF EIRL`
 
 # Install
 
