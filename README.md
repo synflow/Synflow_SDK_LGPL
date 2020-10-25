@@ -1,10 +1,11 @@
-# ngDesign gpl-3.0
+# The Synflow SDK LGPL
 
-ngDesign is the compiler + IDE for the Cx programming language. See http://cx-lang.org for more details and documentation about the language.
+The Synflow SDK is the compiler + IDE for the Cx programming language. See http://cx-lang.org for more details and documentation about the language.
 
 # License
 
-The code is under GNU General Public License v3.0. Some files are also licensed under the BSD license (as indicated in the header of said files).
+The code is under GNU General Public License v3.0 LGPL. Some files are also licensed under the BSD license (as indicated in the header of said files).
+Copyright © `2015-2020` `Synflow, a trademark of NextDF EIRL>`
 
 # Install
 
@@ -30,7 +31,7 @@ A step by step explanation that tells you how to get your development environmen
 6.  Run the product (Run as => ngdesign.product => Plug-ins => Add Required Plug-ins, and then Apply and Run)
 
 ### Run and test it
-See our [documentation](https://synflow.gitlab.io/docs/) or [tutorial](https://synflow.gitlab.io/courses/) to learn how to use our tool. 
+See our [documentation](https://synflow.gitlab.io/docs/) or [tutorial](https://synflow.gitlab.io/courses/) to learn how to use our tool.
 
 ## Built With
 
@@ -48,4 +49,3 @@ For the versions available, see the [tags on this repository](https://gitlab.com
 
 * **Nicolas Siret** - [Nicolas06](https://gitlab.com/nicolas06)
 * **Matthieu Wipliez** - [matt2xu](https://gitlab.com/matt2xu)
-
