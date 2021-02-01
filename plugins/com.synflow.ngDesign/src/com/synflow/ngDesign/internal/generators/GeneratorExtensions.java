@@ -21,7 +21,6 @@ package com.synflow.ngDesign.internal.generators;
 
 import java.util.List;
 
-import com.synflow.ngDesign.internal.generators.Namer;
 import com.synflow.models.dpn.Endpoint;
 import com.synflow.models.ir.Block;
 import com.synflow.models.ir.BlockBasic;
