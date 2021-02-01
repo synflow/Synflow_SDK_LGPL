@@ -2,7 +2,7 @@
 <feature
       id="com.synflow.ngDesign.feature"
       label="%featureName"
-      version="0.92.0.qualifier"
+      version="1.0.0.qualifier"
       provider-name="%providerName"
       plugin="com.synflow.ngDesign.ide">
 
@@ -11,7 +11,7 @@
    </description>
 
    <copyright>
-      Copyright (c) 2012-2019, Synflow SAS
+      Copyright (c) 2012-2021, Synflow SAS
       All rights reserved.
    </copyright>
 

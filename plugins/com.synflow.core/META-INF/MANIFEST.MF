@@ -3,7 +3,7 @@ Automatic-Module-Name: <module name>
 Bundle-ManifestVersion: 2
 Bundle-Name: %pluginName
 Bundle-SymbolicName: com.synflow.core;singleton:=true
-Bundle-Version: 0.92.0.qualifier
+Bundle-Version: 1.0.0.qualifier
 Bundle-ClassPath: .
 Bundle-Activator: com.synflow.core.SynflowCore
 Bundle-Vendor: %providerName
