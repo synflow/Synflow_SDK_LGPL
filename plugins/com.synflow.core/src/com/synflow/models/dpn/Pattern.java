@@ -1,7 +1,7 @@
 /*
  * This file is part of the ngDesign SDK.
  *
- * Copyright (c) 2019 Synflow SAS.
+ * Copyright (c) 2019 - 2021 Synflow SAS.
  *
  * ngDesign is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
