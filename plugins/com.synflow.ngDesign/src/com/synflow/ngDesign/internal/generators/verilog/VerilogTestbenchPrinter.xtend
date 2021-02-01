@@ -41,10 +41,8 @@ class VerilogTestbenchPrinter {
 
 	val VerilogPrinter dfPrinter
 
-	val Namer namer
-
 	new(Namer namer, IPathResolver pathResolver) {
-		this.namer = namer
+		
 		dfPrinter = new VerilogPrinter(namer, pathResolver)
 	}
 
