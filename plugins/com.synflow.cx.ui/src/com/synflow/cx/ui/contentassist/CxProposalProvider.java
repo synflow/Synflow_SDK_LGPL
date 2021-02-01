@@ -41,7 +41,6 @@ import com.synflow.cx.cx.CxPackage;
 import com.synflow.cx.cx.Inst;
 import com.synflow.cx.cx.Network;
 import com.synflow.cx.cx.StatementWrite;
-import com.synflow.cx.ui.contentassist.AbstractCxProposalProvider;
 
 /**
  * see http://www.eclipse.org/Xtext/documentation.html#contentAssist on how to customize content

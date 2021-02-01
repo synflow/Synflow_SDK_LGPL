@@ -19,8 +19,6 @@
  */
 package com.synflow.cx;
 
-import com.synflow.cx.CxStandaloneSetupGenerated;
-
 /**
  * Initialization support for running Xtext languages without equinox extension
  * registry
