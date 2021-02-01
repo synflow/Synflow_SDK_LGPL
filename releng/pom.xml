@@ -8,7 +8,7 @@
   <parent>
     <groupId>com.synflow</groupId>
     <artifactId>com.synflow.ngDesign.releng</artifactId>
-    <version><!-- ${ngDesign-version} -->0.92.0-SNAPSHOT</version>
+    <version><!-- ${ngDesign-version} -->1.0.0-SNAPSHOT</version>
     <relativePath>com.synflow.ngDesign.releng</relativePath>
   </parent>
 
